@@ -1,0 +1,34 @@
+seed: 42
+
+rsnet:
+  checkpoint: "/home/data/KXShen/model/project0103/rsnet_whu_ori_20260103_231138/rsnet_best.pth"
+  temperature_json: "/home/data/KXShen/model/project0103/rsnet_whu_ori_20260103_231138/rsnet_calibration.json"
+  config: "configs/rsnet_whu_ori.yaml"
+
+sen12ms:
+  dataset: "sen12mscr_raw"
+  root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
+  cloudy_glob: "ROIs*_s2_cloudy/s2_cloudy_*/*.tif"
+  image_ext: ".tif"
+  bands: [1, 2, 3, 7]
+  s2_clip_min: 0.0
+  s2_clip_max: 10000.0
+
+alpha:
+  output_dir: "/home/data/KXShen/model/project0103/alpha_cache_sen12mscr_raw"
+  output_ext: ".npy"
+  save_uint8: true
+  tau: 0.5
+  k: 12.0
+  blur_sigma: 1.5
+  ring_threshold: 0.6
+  ring_radius: 8
+  ring_weight: 0.5
+  shadow_weight: 0.7
+  dark_percentile: 10.0
+  use_dark_pixel: true
+
+runtime:
+  batch_size: 8
+  num_workers: 4
+  device: "cuda"

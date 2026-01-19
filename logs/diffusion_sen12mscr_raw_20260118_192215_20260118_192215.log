@@ -1,0 +1,14 @@
+2026-01-18 19:22:15 运行时间戳: 20260118_192215
+2026-01-18 19:22:15 输出目录: /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260118_192215
+2026-01-18 19:22:15 World size: 4, Rank: 0
+2026-01-18 19:22:15 配置文件: configs/diffusion.yaml
+2026-01-18 19:42:24 Epoch 1/100 - train_loss 2.4413 lr 4.02e-06
+2026-01-18 19:43:53 Epoch 1/100 - test_loss 2.4249 diff 1.0755 recon 0.3957 grad 1.9072
+2026-01-18 19:45:16 vis cloudy min 0.0018 max 1.0000 mean 0.2753 p1 0.0141 p99 1.0000 <0 0.00% >1 0.00%
+2026-01-18 19:45:16 vis pred min -1.0000 max 2.0000 mean 0.7723 p1 -0.9870 p99 1.9926 <0 22.86% >1 45.22%
+2026-01-18 19:45:16 vis clear min 0.0002 max 1.0000 mean 0.1345 p1 0.0207 p99 0.3186 <0 0.00% >1 0.00%
+2026-01-18 19:45:16 vis auto_scale enabled (ref=clear, per_channel=True)
+2026-01-18 19:45:16 vis pred out-of-range 68.08% -> use self scale for pred
+2026-01-18 19:45:21 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260118_192215/vis/diffusion_vis_epoch_001.png
+2026-01-18 19:45:24 Epoch 1/100 - checkpoints saved
+2026-01-18 19:45:26 Epoch 1/100 - saved diffusion_best.pth (test_loss 2.4249)

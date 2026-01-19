@@ -1,0 +1,73 @@
+seed: 42
+
+model:
+  x_channels: 6
+  y_channels: 6
+  s_channels: 2
+  base_channels: 64
+  depth: 4
+  time_dim: 256
+
+train:
+  batch_size: 8
+  num_epochs: 100
+  lr: 2.0e-5
+  weight_decay: 1.0e-4
+  ema_decay: 0.999
+  amp: false
+  grad_clip: 1.0
+  # Learning rate scheduler settings
+  use_scheduler: true
+  warmup_epochs: 5
+
+loss:
+  recon_weight: 1.0
+  grad_weight: 0.5
+  # Time-dependent weighting for auxiliary losses
+  # Weight is high at t=0 (reliable x0_pred) and low at t=T (noisy x0_pred)
+  aux_min_weight: 0.1
+  aux_max_weight: 1.0
+
+schedule:
+  timesteps: 1000
+  beta_start: 1.0e-4
+  beta_end: 2.0e-2
+  type: "cosine"
+  # x0 预测值截断范围 (用于数值稳定性)
+  x0_clip_min: -1.0
+  x0_clip_max: 2.0
+
+sampling:
+  steps: 50          # DDIM 通常 50-100 步即可，加速推理
+  method: "ddim"
+  eta: 0.0           # 0.0 为确定性采样，1.0 接近 DDPM
+  # 初始化方法: "noise" (纯噪声), "noisy_input" (从有云图像加噪), "mixed" (混合)
+  init_method: "noise"
+  noise_ratio: 1.0   # 用于 mixed 模式
+
+sen12ms:
+  dataset: "sen12mscr_raw"
+  root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
+  image_ext: ".tif"
+  bands: [1, 2, 3, 7, 11, 12]
+  s2_clip_min: 0.0
+  s2_clip_max: 10000.0
+  s1_db_min: -25.0
+  s1_db_max: 0.0
+  split_csv: "splits/sen12mscr_split.csv"
+  split: "train"
+
+test:
+  dataset: "sen12mscr_raw"
+  root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
+  image_ext: ".tif"
+  bands: [1, 2, 3, 7, 11, 12]
+  s2_clip_min: 0.0
+  s2_clip_max: 10000.0
+  s1_db_min: -25.0
+  s1_db_max: 0.0
+  split_csv: "splits/sen12mscr_split.csv"
+  split: "test"
+
+output:
+  dir: "/home/data/KXShen/model/project0103/diffusion_sen12mscr_raw"

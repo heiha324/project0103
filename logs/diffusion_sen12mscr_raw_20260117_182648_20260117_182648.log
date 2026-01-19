@@ -1,0 +1,494 @@
+2026-01-17 18:26:48 Run timestamp: 20260117_182648
+2026-01-17 18:26:48 Output dir: /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648
+2026-01-17 18:26:48 World size: 4, rank: 0
+2026-01-17 18:26:48 Config: configs/diffusion.yaml
+2026-01-17 18:48:07 Epoch 1/100 - train_loss 2.3563 lr 2.01e-05
+2026-01-17 18:49:36 Epoch 1/100 - test_loss 2.3244 diff 1.0009 recon 0.3869 grad 1.8733
+2026-01-17 18:50:58 vis cloudy min 0.0018 max 1.0000 mean 0.2753 p1 0.0141 p99 1.0000 <0 0.00% >1 0.00%
+2026-01-17 18:50:58 vis pred min -105523.3281 max 104774.3047 mean -1299.8182 p1 -48566.1191 p99 45871.2102 <0 52.55% >1 47.44%
+2026-01-17 18:50:59 vis clear min 0.0002 max 1.0000 mean 0.1345 p1 0.0207 p99 0.3186 <0 0.00% >1 0.00%
+2026-01-17 18:50:59 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-17 18:50:59 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-17 18:51:04 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_001.png
+2026-01-17 18:51:06 Epoch 1/100 - checkpoints saved
+2026-01-17 18:51:08 Epoch 1/100 - saved diffusion_best.pth (test_loss 2.3244)
+2026-01-17 19:12:19 Epoch 2/100 - train_loss 0.4650 lr 4.01e-05
+2026-01-17 19:13:48 Epoch 2/100 - test_loss 0.3840 diff 0.0681 recon 0.1434 grad 0.3449
+2026-01-17 19:15:10 vis cloudy min 0.0026 max 1.0000 mean 0.3010 p1 0.0227 p99 1.0000 <0 0.00% >1 0.00%
+2026-01-17 19:15:10 vis pred min -50430.5000 max 36475.0195 mean -6727.8979 p1 -14716.8446 p99 956.9011 <0 98.20% >1 1.80%
+2026-01-17 19:15:10 vis clear min 0.0001 max 1.0000 mean 0.1393 p1 0.0268 p99 0.3556 <0 0.00% >1 0.00%
+2026-01-17 19:15:10 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-17 19:15:10 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-17 19:15:15 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_002.png
+2026-01-17 19:15:19 Epoch 2/100 - checkpoints saved
+2026-01-17 19:15:21 Epoch 2/100 - saved diffusion_best.pth (test_loss 0.3840)
+2026-01-17 19:36:44 Epoch 3/100 - train_loss 0.2099 lr 6.00e-05
+2026-01-17 19:38:13 Epoch 3/100 - test_loss 0.1923 diff 0.0213 recon 0.0909 grad 0.1602
+2026-01-17 19:39:35 vis cloudy min 0.0103 max 1.0000 mean 0.2627 p1 0.0381 p99 0.9818 <0 0.00% >1 0.00%
+2026-01-17 19:39:35 vis pred min -41039.9727 max 27945.0625 mean -3662.4175 p1 -7378.2053 p99 -1182.0907 <0 99.77% >1 0.23%
+2026-01-17 19:39:35 vis clear min 0.0079 max 1.0000 mean 0.1543 p1 0.0509 p99 0.3453 <0 0.00% >1 0.00%
+2026-01-17 19:39:35 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-17 19:39:35 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-17 19:39:41 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_003.png
+2026-01-17 19:39:44 Epoch 3/100 - checkpoints saved
+2026-01-17 19:39:46 Epoch 3/100 - saved diffusion_best.pth (test_loss 0.1923)
+2026-01-17 20:01:01 Epoch 4/100 - train_loss 0.1398 lr 8.00e-05
+2026-01-17 20:02:29 Epoch 4/100 - test_loss 0.1260 diff 0.0129 recon 0.0580 grad 0.1102
+2026-01-17 20:03:52 vis cloudy min 0.0001 max 1.0000 mean 0.2073 p1 0.0012 p99 0.7177 <0 0.00% >1 0.00%
+2026-01-17 20:03:52 vis pred min -34496.5898 max 24230.3184 mean -3258.7656 p1 -7397.3157 p99 -1938.8942 <0 99.92% >1 0.08%
+2026-01-17 20:03:52 vis clear min 0.0002 max 0.6662 mean 0.1212 p1 0.0032 p99 0.3250 <0 0.00% >1 0.00%
+2026-01-17 20:03:52 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-17 20:03:52 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-17 20:03:57 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_004.png
+2026-01-17 20:04:01 Epoch 4/100 - checkpoints saved
+2026-01-17 20:04:03 Epoch 4/100 - saved diffusion_best.pth (test_loss 0.1260)
+2026-01-17 20:25:24 Epoch 5/100 - train_loss 0.1163 lr 1.00e-04
+2026-01-17 20:26:53 Epoch 5/100 - test_loss 0.0961 diff 0.0094 recon 0.0410 grad 0.0915
+2026-01-17 20:28:16 vis cloudy min 0.0026 max 1.0000 mean 0.1983 p1 0.0073 p99 0.7115 <0 0.00% >1 0.00%
+2026-01-17 20:28:16 vis pred min -28436.7051 max 13982.8643 mean -1598.0912 p1 -3954.5321 p99 -861.0556 <0 99.86% >1 0.14%
+2026-01-17 20:28:16 vis clear min 0.0044 max 0.7565 mean 0.1349 p1 0.0075 p99 0.3373 <0 0.00% >1 0.00%
+2026-01-17 20:28:16 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-17 20:28:16 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-17 20:28:22 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_005.png
+2026-01-17 20:28:26 Epoch 5/100 - checkpoints saved
+2026-01-17 20:28:28 Epoch 5/100 - saved diffusion_best.pth (test_loss 0.0961)
+2026-01-17 20:49:39 Epoch 6/100 - train_loss 0.0946 lr 1.00e-04
+2026-01-17 20:51:08 Epoch 6/100 - test_loss 0.0927 diff 0.0094 recon 0.0368 grad 0.0929
+2026-01-17 20:52:31 vis cloudy min 0.0001 max 1.0000 mean 0.1875 p1 0.0042 p99 0.6563 <0 0.00% >1 0.00%
+2026-01-17 20:52:31 vis pred min -19741.4473 max 11255.7568 mean -642.8877 p1 -1810.5625 p99 -239.2734 <0 99.65% >1 0.35%
+2026-01-17 20:52:31 vis clear min 0.0001 max 0.5302 mean 0.1308 p1 0.0064 p99 0.2961 <0 0.00% >1 0.00%
+2026-01-17 20:52:31 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-17 20:52:31 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-17 20:52:36 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_006.png
+2026-01-17 20:52:39 Epoch 6/100 - checkpoints saved
+2026-01-17 20:52:41 Epoch 6/100 - saved diffusion_best.pth (test_loss 0.0927)
+2026-01-17 21:13:59 Epoch 7/100 - train_loss 0.0732 lr 9.99e-05
+2026-01-17 21:15:28 Epoch 7/100 - test_loss 0.0687 diff 0.0078 recon 0.0325 grad 0.0569
+2026-01-17 21:16:50 vis cloudy min 0.0029 max 1.0000 mean 0.2361 p1 0.0419 p99 0.6542 <0 0.00% >1 0.00%
+2026-01-17 21:16:50 vis pred min -21176.0996 max 9683.0625 mean -1982.8453 p1 -4422.0521 p99 -1381.7394 <0 99.96% >1 0.04%
+2026-01-17 21:16:51 vis clear min 0.0030 max 0.6906 mean 0.1339 p1 0.0334 p99 0.3144 <0 0.00% >1 0.00%
+2026-01-17 21:16:51 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-17 21:16:51 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-17 21:16:56 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_007.png
+2026-01-17 21:16:59 Epoch 7/100 - checkpoints saved
+2026-01-17 21:17:01 Epoch 7/100 - saved diffusion_best.pth (test_loss 0.0687)
+2026-01-17 21:38:14 Epoch 8/100 - train_loss 0.0638 lr 9.98e-05
+2026-01-17 21:39:42 Epoch 8/100 - test_loss 0.0586 diff 0.0063 recon 0.0260 grad 0.0527
+2026-01-17 21:41:05 vis cloudy min 0.0024 max 1.0000 mean 0.2015 p1 0.0248 p99 0.6298 <0 0.00% >1 0.00%
+2026-01-17 21:41:05 vis pred min -19648.5391 max 9542.0693 mean -1300.8750 p1 -3299.3030 p99 -468.9609 <0 99.95% >1 0.05%
+2026-01-17 21:41:05 vis clear min 0.0021 max 0.8996 mean 0.1353 p1 0.0347 p99 0.3246 <0 0.00% >1 0.00%
+2026-01-17 21:41:05 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-17 21:41:05 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-17 21:41:11 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_008.png
+2026-01-17 21:41:14 Epoch 8/100 - checkpoints saved
+2026-01-17 21:41:17 Epoch 8/100 - saved diffusion_best.pth (test_loss 0.0586)
+2026-01-17 22:02:35 Epoch 9/100 - train_loss 0.0593 lr 9.96e-05
+2026-01-17 22:04:04 Epoch 9/100 - test_loss 0.0530 diff 0.0057 recon 0.0246 grad 0.0453
+2026-01-17 22:05:27 vis cloudy min 0.0059 max 1.0000 mean 0.2560 p1 0.0320 p99 0.6360 <0 0.00% >1 0.00%
+2026-01-17 22:05:27 vis pred min -17556.8164 max 8005.8428 mean -998.6618 p1 -2258.4678 p99 -53.5750 <0 99.43% >1 0.56%
+2026-01-17 22:05:27 vis clear min 0.0045 max 0.7505 mean 0.1422 p1 0.0411 p99 0.3405 <0 0.00% >1 0.00%
+2026-01-17 22:05:27 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-17 22:05:27 vis pred out-of-range 99.99% -> use self scale for pred (threshold 5.00%)
+2026-01-17 22:05:33 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_009.png
+2026-01-17 22:05:36 Epoch 9/100 - checkpoints saved
+2026-01-17 22:05:38 Epoch 9/100 - saved diffusion_best.pth (test_loss 0.0530)
+2026-01-17 22:26:51 Epoch 10/100 - train_loss 0.0663 lr 9.93e-05
+2026-01-17 22:28:19 Epoch 10/100 - test_loss 0.0484 diff 0.0053 recon 0.0227 grad 0.0407
+2026-01-17 22:29:42 vis cloudy min 0.0029 max 1.0000 mean 0.2105 p1 0.0239 p99 0.5974 <0 0.00% >1 0.00%
+2026-01-17 22:29:42 vis pred min -12244.3994 max 4309.8877 mean -1042.0422 p1 -1666.6637 p99 -730.6553 <0 99.99% >1 0.01%
+2026-01-17 22:29:42 vis clear min 0.0013 max 0.6337 mean 0.1372 p1 0.0405 p99 0.3845 <0 0.00% >1 0.00%
+2026-01-17 22:29:42 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-17 22:29:42 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-17 22:29:48 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_010.png
+2026-01-17 22:29:51 Epoch 10/100 - checkpoints saved
+2026-01-17 22:29:53 Epoch 10/100 - saved diffusion_best.pth (test_loss 0.0484)
+2026-01-17 22:51:12 Epoch 11/100 - train_loss 0.0497 lr 9.90e-05
+2026-01-17 22:52:41 Epoch 11/100 - test_loss 0.0443 diff 0.0049 recon 0.0220 grad 0.0347
+2026-01-17 22:54:04 vis cloudy min 0.0058 max 1.0000 mean 0.2662 p1 0.0302 p99 0.7323 <0 0.00% >1 0.00%
+2026-01-17 22:54:04 vis pred min -10189.2998 max 3939.1895 mean -962.7790 p1 -1378.4060 p99 -736.7879 <0 100.00% >1 0.00%
+2026-01-17 22:54:04 vis clear min 0.0061 max 1.0000 mean 0.1401 p1 0.0449 p99 0.3492 <0 0.00% >1 0.00%
+2026-01-17 22:54:04 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-17 22:54:04 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-17 22:54:09 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_011.png
+2026-01-17 22:54:12 Epoch 11/100 - checkpoints saved
+2026-01-17 22:54:14 Epoch 11/100 - saved diffusion_best.pth (test_loss 0.0443)
+2026-01-17 23:15:29 Epoch 12/100 - train_loss 0.0488 lr 9.87e-05
+2026-01-17 23:16:58 Epoch 12/100 - test_loss 0.0434 diff 0.0048 recon 0.0215 grad 0.0341
+2026-01-17 23:18:20 vis cloudy min 0.0007 max 1.0000 mean 0.2512 p1 0.0146 p99 0.8979 <0 0.00% >1 0.00%
+2026-01-17 23:18:20 vis pred min -7417.4214 max 4859.4360 mean -707.6215 p1 -1136.2146 p99 -265.1584 <0 99.98% >1 0.02%
+2026-01-17 23:18:20 vis clear min 0.0023 max 0.6995 mean 0.1455 p1 0.0296 p99 0.3424 <0 0.00% >1 0.00%
+2026-01-17 23:18:20 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-17 23:18:20 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-17 23:18:26 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_012.png
+2026-01-17 23:18:29 Epoch 12/100 - checkpoints saved
+2026-01-17 23:18:31 Epoch 12/100 - saved diffusion_best.pth (test_loss 0.0434)
+2026-01-17 23:39:51 Epoch 13/100 - train_loss 0.0555 lr 9.83e-05
+2026-01-17 23:41:20 Epoch 13/100 - test_loss 0.0408 diff 0.0047 recon 0.0203 grad 0.0316
+2026-01-17 23:42:42 vis cloudy min 0.0001 max 1.0000 mean 0.2347 p1 0.0450 p99 0.8021 <0 0.00% >1 0.00%
+2026-01-17 23:42:42 vis pred min -8208.8320 max 3117.2869 mean -710.5341 p1 -990.4745 p99 -344.0566 <0 99.99% >1 0.01%
+2026-01-17 23:42:42 vis clear min 0.0032 max 1.0000 mean 0.1373 p1 0.0406 p99 0.3466 <0 0.00% >1 0.00%
+2026-01-17 23:42:42 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-17 23:42:42 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-17 23:42:48 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_013.png
+2026-01-17 23:42:52 Epoch 13/100 - checkpoints saved
+2026-01-17 23:42:54 Epoch 13/100 - saved diffusion_best.pth (test_loss 0.0408)
+2026-01-18 00:04:09 Epoch 14/100 - train_loss 0.0437 lr 9.78e-05
+2026-01-18 00:05:38 Epoch 14/100 - test_loss 0.0387 diff 0.0045 recon 0.0193 grad 0.0299
+2026-01-18 00:07:00 vis cloudy min 0.0013 max 1.0000 mean 0.2015 p1 0.0286 p99 0.7830 <0 0.00% >1 0.00%
+2026-01-18 00:07:00 vis pred min -6564.8457 max 3338.6858 mean -643.5511 p1 -901.2533 p99 -286.4072 <0 99.99% >1 0.01%
+2026-01-18 00:07:01 vis clear min 0.0001 max 1.0000 mean 0.1178 p1 0.0126 p99 0.3104 <0 0.00% >1 0.00%
+2026-01-18 00:07:01 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 00:07:01 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 00:07:06 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_014.png
+2026-01-18 00:07:10 Epoch 14/100 - checkpoints saved
+2026-01-18 00:07:12 Epoch 14/100 - saved diffusion_best.pth (test_loss 0.0387)
+2026-01-18 00:28:31 Epoch 15/100 - train_loss 0.0415 lr 9.73e-05
+2026-01-18 00:30:00 Epoch 15/100 - test_loss 0.0376 diff 0.0044 recon 0.0193 grad 0.0280
+2026-01-18 00:31:22 vis cloudy min 0.0039 max 0.9599 mean 0.2157 p1 0.0192 p99 0.5983 <0 0.00% >1 0.00%
+2026-01-18 00:31:22 vis pred min -5771.6831 max 3792.4941 mean -620.1433 p1 -861.8022 p99 -260.8195 <0 99.98% >1 0.01%
+2026-01-18 00:31:22 vis clear min 0.0044 max 1.0000 mean 0.1500 p1 0.0450 p99 0.3208 <0 0.00% >1 0.00%
+2026-01-18 00:31:22 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 00:31:22 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 00:31:27 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_015.png
+2026-01-18 00:31:31 Epoch 15/100 - checkpoints saved
+2026-01-18 00:31:33 Epoch 15/100 - saved diffusion_best.pth (test_loss 0.0376)
+2026-01-18 00:52:48 Epoch 16/100 - train_loss 0.0441 lr 9.68e-05
+2026-01-18 00:54:17 Epoch 16/100 - test_loss 0.0403 diff 0.0056 recon 0.0200 grad 0.0294
+2026-01-18 00:55:39 vis cloudy min 0.0057 max 1.0000 mean 0.2755 p1 0.0334 p99 0.8116 <0 0.00% >1 0.00%
+2026-01-18 00:55:39 vis pred min -4071.2341 max 3469.4009 mean -619.7281 p1 -922.8572 p99 -157.9241 <0 99.98% >1 0.02%
+2026-01-18 00:55:40 vis clear min 0.0039 max 0.5710 mean 0.1426 p1 0.0366 p99 0.3233 <0 0.00% >1 0.00%
+2026-01-18 00:55:40 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 00:55:40 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 00:55:44 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_016.png
+2026-01-18 00:55:48 Epoch 16/100 - checkpoints saved
+2026-01-18 01:17:10 Epoch 17/100 - train_loss 0.0387 lr 9.62e-05
+2026-01-18 01:18:38 Epoch 17/100 - test_loss 0.0366 diff 0.0043 recon 0.0191 grad 0.0265
+2026-01-18 01:20:01 vis cloudy min 0.0001 max 1.0000 mean 0.2447 p1 0.0266 p99 0.7931 <0 0.00% >1 0.00%
+2026-01-18 01:20:01 vis pred min -3814.3467 max 3095.9065 mean -500.3230 p1 -763.9240 p99 -121.9773 <0 99.97% >1 0.03%
+2026-01-18 01:20:01 vis clear min 0.0001 max 0.9178 mean 0.1307 p1 0.0170 p99 0.3511 <0 0.00% >1 0.00%
+2026-01-18 01:20:01 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 01:20:01 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 01:20:07 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_017.png
+2026-01-18 01:20:10 Epoch 17/100 - checkpoints saved
+2026-01-18 01:20:12 Epoch 17/100 - saved diffusion_best.pth (test_loss 0.0366)
+2026-01-18 01:41:28 Epoch 18/100 - train_loss 0.0437 lr 9.55e-05
+2026-01-18 01:42:56 Epoch 18/100 - test_loss 0.0386 diff 0.0046 recon 0.0178 grad 0.0324
+2026-01-18 01:44:19 vis cloudy min 0.0006 max 1.0000 mean 0.2343 p1 0.0140 p99 0.9657 <0 0.00% >1 0.00%
+2026-01-18 01:44:19 vis pred min -6219.3286 max 4034.3599 mean -813.4798 p1 -1162.5684 p99 -307.5201 <0 99.99% >1 0.01%
+2026-01-18 01:44:19 vis clear min 0.0001 max 0.5985 mean 0.1191 p1 0.0010 p99 0.3208 <0 0.00% >1 0.00%
+2026-01-18 01:44:19 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 01:44:19 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 01:44:24 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_018.png
+2026-01-18 01:44:27 Epoch 18/100 - checkpoints saved
+2026-01-18 02:05:48 Epoch 19/100 - train_loss 0.0378 lr 9.48e-05
+2026-01-18 02:07:16 Epoch 19/100 - test_loss 0.0350 diff 0.0042 recon 0.0182 grad 0.0254
+2026-01-18 02:08:39 vis cloudy min 0.0001 max 1.0000 mean 0.2170 p1 0.0032 p99 0.8508 <0 0.00% >1 0.00%
+2026-01-18 02:08:39 vis pred min -3919.8210 max 3352.4963 mean -578.8685 p1 -791.0509 p99 -289.9908 <0 99.99% >1 0.01%
+2026-01-18 02:08:39 vis clear min 0.0001 max 1.0000 mean 0.1189 p1 0.0013 p99 0.3373 <0 0.00% >1 0.00%
+2026-01-18 02:08:39 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 02:08:39 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 02:08:44 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_019.png
+2026-01-18 02:08:48 Epoch 19/100 - checkpoints saved
+2026-01-18 02:08:50 Epoch 19/100 - saved diffusion_best.pth (test_loss 0.0350)
+2026-01-18 02:30:03 Epoch 20/100 - train_loss 0.0416 lr 9.40e-05
+2026-01-18 02:31:32 Epoch 20/100 - test_loss 0.0372 diff 0.0044 recon 0.0173 grad 0.0310
+2026-01-18 02:32:55 vis cloudy min 0.0047 max 1.0000 mean 0.2307 p1 0.0295 p99 0.9202 <0 0.00% >1 0.00%
+2026-01-18 02:32:55 vis pred min -4819.2910 max 3272.5168 mean -561.6134 p1 -884.5904 p99 -90.5146 <0 99.82% >1 0.18%
+2026-01-18 02:32:55 vis clear min 0.0002 max 1.0000 mean 0.1370 p1 0.0148 p99 0.3920 <0 0.00% >1 0.00%
+2026-01-18 02:32:55 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 02:32:55 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 02:33:00 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_020.png
+2026-01-18 02:33:03 Epoch 20/100 - checkpoints saved
+2026-01-18 02:54:24 Epoch 21/100 - train_loss 0.0364 lr 9.32e-05
+2026-01-18 02:55:52 Epoch 21/100 - test_loss 0.0337 diff 0.0041 recon 0.0166 grad 0.0261
+2026-01-18 02:57:15 vis cloudy min 0.0001 max 1.0000 mean 0.2046 p1 0.0065 p99 0.7090 <0 0.00% >1 0.00%
+2026-01-18 02:57:15 vis pred min -3582.9753 max 2937.5464 mean -339.1222 p1 -600.2291 p99 63.2722 <0 96.75% >1 3.21%
+2026-01-18 02:57:15 vis clear min 0.0001 max 1.0000 mean 0.1299 p1 0.0016 p99 0.3379 <0 0.00% >1 0.00%
+2026-01-18 02:57:15 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 02:57:15 vis pred out-of-range 99.96% -> use self scale for pred (threshold 5.00%)
+2026-01-18 02:57:21 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_021.png
+2026-01-18 02:57:24 Epoch 21/100 - checkpoints saved
+2026-01-18 02:57:26 Epoch 21/100 - saved diffusion_best.pth (test_loss 0.0337)
+2026-01-18 03:18:40 Epoch 22/100 - train_loss 0.0355 lr 9.24e-05
+2026-01-18 03:20:09 Epoch 22/100 - test_loss 0.0329 diff 0.0040 recon 0.0164 grad 0.0251
+2026-01-18 03:21:32 vis cloudy min 0.0029 max 1.0000 mean 0.2035 p1 0.0129 p99 0.5593 <0 0.00% >1 0.00%
+2026-01-18 03:21:32 vis pred min -3718.5107 max 2310.7458 mean -290.7908 p1 -542.1012 p99 84.5482 <0 95.40% >1 4.52%
+2026-01-18 03:21:32 vis clear min 0.0001 max 0.5920 mean 0.1659 p1 0.0011 p99 0.4772 <0 0.00% >1 0.00%
+2026-01-18 03:21:32 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 03:21:32 vis pred out-of-range 99.93% -> use self scale for pred (threshold 5.00%)
+2026-01-18 03:21:37 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_022.png
+2026-01-18 03:21:40 Epoch 22/100 - checkpoints saved
+2026-01-18 03:21:42 Epoch 22/100 - saved diffusion_best.pth (test_loss 0.0329)
+2026-01-18 03:43:02 Epoch 23/100 - train_loss 0.0366 lr 9.15e-05
+2026-01-18 03:44:30 Epoch 23/100 - test_loss 0.0332 diff 0.0040 recon 0.0169 grad 0.0245
+2026-01-18 03:45:53 vis cloudy min 0.0044 max 1.0000 mean 0.2595 p1 0.0325 p99 0.8889 <0 0.00% >1 0.00%
+2026-01-18 03:45:53 vis pred min -5468.8916 max 2298.1692 mean -289.3990 p1 -585.4144 p99 169.6682 <0 89.72% >1 10.22%
+2026-01-18 03:45:53 vis clear min 0.0027 max 0.6881 mean 0.1237 p1 0.0225 p99 0.3101 <0 0.00% >1 0.00%
+2026-01-18 03:45:53 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 03:45:53 vis pred out-of-range 99.94% -> use self scale for pred (threshold 5.00%)
+2026-01-18 03:45:58 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_023.png
+2026-01-18 03:46:02 Epoch 23/100 - checkpoints saved
+2026-01-18 04:07:16 Epoch 24/100 - train_loss 0.0353 lr 9.05e-05
+2026-01-18 04:08:45 Epoch 24/100 - test_loss 0.0319 diff 0.0039 recon 0.0158 grad 0.0243
+2026-01-18 04:10:08 vis cloudy min 0.0001 max 0.8313 mean 0.2249 p1 0.0078 p99 0.5583 <0 0.00% >1 0.00%
+2026-01-18 04:10:08 vis pred min -3706.9160 max 2741.3970 mean -234.0403 p1 -501.0024 p99 75.3797 <0 92.64% >1 7.25%
+2026-01-18 04:10:08 vis clear min 0.0001 max 0.6418 mean 0.1673 p1 0.0063 p99 0.5119 <0 0.00% >1 0.00%
+2026-01-18 04:10:08 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 04:10:08 vis pred out-of-range 99.88% -> use self scale for pred (threshold 5.00%)
+2026-01-18 04:10:13 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_024.png
+2026-01-18 04:10:16 Epoch 24/100 - checkpoints saved
+2026-01-18 04:10:19 Epoch 24/100 - saved diffusion_best.pth (test_loss 0.0319)
+2026-01-18 04:31:40 Epoch 25/100 - train_loss 0.0354 lr 8.96e-05
+2026-01-18 04:33:08 Epoch 25/100 - test_loss 0.0339 diff 0.0039 recon 0.0140 grad 0.0321
+2026-01-18 04:34:31 vis cloudy min 0.0006 max 1.0000 mean 0.2388 p1 0.0189 p99 0.8283 <0 0.00% >1 0.00%
+2026-01-18 04:34:31 vis pred min -810.7656 max 595.6726 mean -11.2739 p1 -121.3391 p99 100.9506 <0 57.02% >1 42.32%
+2026-01-18 04:34:31 vis clear min 0.0001 max 1.0000 mean 0.1215 p1 0.0028 p99 0.3276 <0 0.00% >1 0.00%
+2026-01-18 04:34:31 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 04:34:31 vis pred out-of-range 99.34% -> use self scale for pred (threshold 5.00%)
+2026-01-18 04:34:36 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_025.png
+2026-01-18 04:34:39 Epoch 25/100 - checkpoints saved
+2026-01-18 04:55:53 Epoch 26/100 - train_loss 0.0395 lr 8.85e-05
+2026-01-18 04:57:22 Epoch 26/100 - test_loss 0.0331 diff 0.0039 recon 0.0138 grad 0.0308
+2026-01-18 04:58:45 vis cloudy min 0.0001 max 1.0000 mean 0.1730 p1 0.0028 p99 0.7232 <0 0.00% >1 0.00%
+2026-01-18 04:58:45 vis pred min -2026.6523 max 1215.1935 mean -25.7024 p1 -157.5877 p99 72.9722 <0 67.91% >1 31.48%
+2026-01-18 04:58:45 vis clear min 0.0001 max 0.6350 mean 0.1193 p1 0.0013 p99 0.3324 <0 0.00% >1 0.00%
+2026-01-18 04:58:45 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 04:58:45 vis pred out-of-range 99.39% -> use self scale for pred (threshold 5.00%)
+2026-01-18 04:58:50 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_026.png
+2026-01-18 04:58:54 Epoch 26/100 - checkpoints saved
+2026-01-18 05:20:13 Epoch 27/100 - train_loss 0.0361 lr 8.75e-05
+2026-01-18 05:21:42 Epoch 27/100 - test_loss 0.0312 diff 0.0039 recon 0.0149 grad 0.0247
+2026-01-18 05:23:04 vis cloudy min 0.0001 max 0.9894 mean 0.1816 p1 0.0040 p99 0.6311 <0 0.00% >1 0.00%
+2026-01-18 05:23:04 vis pred min -1916.5549 max 5450.0488 mean -133.4220 p1 -289.7838 p99 55.0153 <0 96.40% >1 3.55%
+2026-01-18 05:23:04 vis clear min 0.0001 max 0.6243 mean 0.1404 p1 0.0033 p99 0.3879 <0 0.00% >1 0.00%
+2026-01-18 05:23:04 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 05:23:04 vis pred out-of-range 99.95% -> use self scale for pred (threshold 5.00%)
+2026-01-18 05:23:10 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_027.png
+2026-01-18 05:23:13 Epoch 27/100 - checkpoints saved
+2026-01-18 05:23:16 Epoch 27/100 - saved diffusion_best.pth (test_loss 0.0312)
+2026-01-18 05:44:28 Epoch 28/100 - train_loss 0.0340 lr 8.64e-05
+2026-01-18 05:45:57 Epoch 28/100 - test_loss 0.0304 diff 0.0038 recon 0.0146 grad 0.0240
+2026-01-18 05:47:19 vis cloudy min 0.0013 max 1.0000 mean 0.1955 p1 0.0044 p99 1.0000 <0 0.00% >1 0.00%
+2026-01-18 05:47:20 vis pred min -5274.6831 max 3979.8943 mean -230.2662 p1 -476.1882 p99 86.2851 <0 92.72% >1 7.19%
+2026-01-18 05:47:20 vis clear min 0.0004 max 0.7010 mean 0.1127 p1 0.0044 p99 0.2948 <0 0.00% >1 0.00%
+2026-01-18 05:47:20 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 05:47:20 vis pred out-of-range 99.90% -> use self scale for pred (threshold 5.00%)
+2026-01-18 05:47:25 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_028.png
+2026-01-18 05:47:28 Epoch 28/100 - checkpoints saved
+2026-01-18 05:47:30 Epoch 28/100 - saved diffusion_best.pth (test_loss 0.0304)
+2026-01-18 06:08:49 Epoch 29/100 - train_loss 0.0328 lr 8.52e-05
+2026-01-18 06:10:17 Epoch 29/100 - test_loss 0.0302 diff 0.0038 recon 0.0143 grad 0.0243
+2026-01-18 06:11:40 vis cloudy min 0.0008 max 1.0000 mean 0.1918 p1 0.0123 p99 0.6719 <0 0.00% >1 0.00%
+2026-01-18 06:11:40 vis pred min -4199.4043 max 3831.9839 mean -213.5497 p1 -400.1901 p99 105.7515 <0 92.10% >1 7.83%
+2026-01-18 06:11:40 vis clear min 0.0006 max 1.0000 mean 0.1340 p1 0.0028 p99 0.3617 <0 0.00% >1 0.00%
+2026-01-18 06:11:40 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 06:11:40 vis pred out-of-range 99.93% -> use self scale for pred (threshold 5.00%)
+2026-01-18 06:11:45 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_029.png
+2026-01-18 06:11:49 Epoch 29/100 - checkpoints saved
+2026-01-18 06:11:51 Epoch 29/100 - saved diffusion_best.pth (test_loss 0.0302)
+2026-01-18 06:33:04 Epoch 30/100 - train_loss 0.0323 lr 8.40e-05
+2026-01-18 06:34:32 Epoch 30/100 - test_loss 0.0300 diff 0.0038 recon 0.0145 grad 0.0234
+2026-01-18 06:35:55 vis cloudy min 0.0031 max 1.0000 mean 0.1756 p1 0.0170 p99 0.5773 <0 0.00% >1 0.00%
+2026-01-18 06:35:55 vis pred min -3519.3513 max 2428.6379 mean -197.3039 p1 -368.9472 p99 87.0078 <0 93.34% >1 6.55%
+2026-01-18 06:35:55 vis clear min 0.0001 max 0.6092 mean 0.1234 p1 0.0013 p99 0.3737 <0 0.00% >1 0.00%
+2026-01-18 06:35:55 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 06:35:55 vis pred out-of-range 99.89% -> use self scale for pred (threshold 5.00%)
+2026-01-18 06:36:00 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_030.png
+2026-01-18 06:36:04 Epoch 30/100 - checkpoints saved
+2026-01-18 06:36:06 Epoch 30/100 - saved diffusion_best.pth (test_loss 0.0300)
+2026-01-18 06:57:25 Epoch 31/100 - train_loss 0.0321 lr 8.28e-05
+2026-01-18 06:58:54 Epoch 31/100 - test_loss 0.0301 diff 0.0038 recon 0.0146 grad 0.0235
+2026-01-18 07:00:17 vis cloudy min 0.0021 max 1.0000 mean 0.2523 p1 0.0269 p99 0.7428 <0 0.00% >1 0.00%
+2026-01-18 07:00:17 vis pred min -2778.7104 max 1561.7789 mean -157.0003 p1 -331.2275 p99 105.6048 <0 90.95% >1 8.94%
+2026-01-18 07:00:17 vis clear min 0.0016 max 0.6995 mean 0.1518 p1 0.0182 p99 0.3552 <0 0.00% >1 0.00%
+2026-01-18 07:00:17 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 07:00:17 vis pred out-of-range 99.89% -> use self scale for pred (threshold 5.00%)
+2026-01-18 07:00:22 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_031.png
+2026-01-18 07:00:25 Epoch 31/100 - checkpoints saved
+2026-01-18 07:21:37 Epoch 32/100 - train_loss 0.0311 lr 8.15e-05
+2026-01-18 07:23:06 Epoch 32/100 - test_loss 0.0298 diff 0.0037 recon 0.0148 grad 0.0225
+2026-01-18 07:24:29 vis cloudy min 0.0001 max 1.0000 mean 0.2338 p1 0.0248 p99 1.0000 <0 0.00% >1 0.00%
+2026-01-18 07:24:29 vis pred min -2528.8801 max 2248.8936 mean -143.6525 p1 -300.7597 p99 198.6290 <0 92.10% >1 7.72%
+2026-01-18 07:24:29 vis clear min 0.0003 max 1.0000 mean 0.1270 p1 0.0274 p99 0.2907 <0 0.00% >1 0.00%
+2026-01-18 07:24:29 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 07:24:29 vis pred out-of-range 99.82% -> use self scale for pred (threshold 5.00%)
+2026-01-18 07:24:34 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_032.png
+2026-01-18 07:24:37 Epoch 32/100 - checkpoints saved
+2026-01-18 07:24:40 Epoch 32/100 - saved diffusion_best.pth (test_loss 0.0298)
+2026-01-18 07:45:58 Epoch 33/100 - train_loss 0.0311 lr 8.03e-05
+2026-01-18 07:47:27 Epoch 33/100 - test_loss 0.0296 diff 0.0037 recon 0.0148 grad 0.0222
+2026-01-18 07:48:50 vis cloudy min 0.0058 max 1.0000 mean 0.1791 p1 0.0236 p99 0.5244 <0 0.00% >1 0.00%
+2026-01-18 07:48:50 vis pred min -2196.2095 max 1710.2031 mean -149.9418 p1 -311.0719 p99 93.7811 <0 92.13% >1 7.75%
+2026-01-18 07:48:50 vis clear min 0.0016 max 0.6945 mean 0.1259 p1 0.0254 p99 0.3230 <0 0.00% >1 0.00%
+2026-01-18 07:48:50 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 07:48:50 vis pred out-of-range 99.87% -> use self scale for pred (threshold 5.00%)
+2026-01-18 07:48:55 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_033.png
+2026-01-18 07:48:59 Epoch 33/100 - checkpoints saved
+2026-01-18 07:49:02 Epoch 33/100 - saved diffusion_best.pth (test_loss 0.0296)
+2026-01-18 08:10:14 Epoch 34/100 - train_loss 0.0326 lr 7.89e-05
+2026-01-18 08:11:43 Epoch 34/100 - test_loss 0.0297 diff 0.0036 recon 0.0135 grad 0.0250
+2026-01-18 08:13:06 vis cloudy min 0.0031 max 1.0000 mean 0.2754 p1 0.0129 p99 0.8942 <0 0.00% >1 0.00%
+2026-01-18 08:13:06 vis pred min -2008.5978 max 1074.0587 mean -172.8644 p1 -333.6181 p99 73.0450 <0 97.49% >1 2.44%
+2026-01-18 08:13:06 vis clear min 0.0001 max 0.7434 mean 0.1724 p1 0.0039 p99 0.4069 <0 0.00% >1 0.00%
+2026-01-18 08:13:06 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 08:13:06 vis pred out-of-range 99.93% -> use self scale for pred (threshold 5.00%)
+2026-01-18 08:13:11 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_034.png
+2026-01-18 08:13:15 Epoch 34/100 - checkpoints saved
+2026-01-18 08:34:34 Epoch 35/100 - train_loss 0.0312 lr 7.76e-05
+2026-01-18 08:36:02 Epoch 35/100 - test_loss 0.0285 diff 0.0036 recon 0.0137 grad 0.0223
+2026-01-18 08:37:25 vis cloudy min 0.0002 max 1.0000 mean 0.2261 p1 0.0122 p99 0.8225 <0 0.00% >1 0.00%
+2026-01-18 08:37:25 vis pred min -4663.0811 max 2760.3950 mean -662.7236 p1 -936.7815 p99 -468.1458 <0 99.99% >1 0.01%
+2026-01-18 08:37:25 vis clear min 0.0001 max 1.0000 mean 0.1326 p1 0.0030 p99 0.3985 <0 0.00% >1 0.00%
+2026-01-18 08:37:25 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 08:37:25 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 08:37:30 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_035.png
+2026-01-18 08:37:34 Epoch 35/100 - checkpoints saved
+2026-01-18 08:37:37 Epoch 35/100 - saved diffusion_best.pth (test_loss 0.0285)
+2026-01-18 08:58:47 Epoch 36/100 - train_loss 0.0301 lr 7.62e-05
+2026-01-18 09:00:15 Epoch 36/100 - test_loss 0.0284 diff 0.0036 recon 0.0139 grad 0.0218
+2026-01-18 09:01:38 vis cloudy min 0.0047 max 1.0000 mean 0.1613 p1 0.0196 p99 0.5331 <0 0.00% >1 0.00%
+2026-01-18 09:01:38 vis pred min -3994.9700 max 2027.7999 mean -743.3820 p1 -1056.2139 p99 -517.7245 <0 100.00% >1 0.00%
+2026-01-18 09:01:38 vis clear min 0.0022 max 0.8398 mean 0.1268 p1 0.0344 p99 0.2955 <0 0.00% >1 0.00%
+2026-01-18 09:01:38 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 09:01:38 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 09:01:44 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_036.png
+2026-01-18 09:01:47 Epoch 36/100 - checkpoints saved
+2026-01-18 09:01:49 Epoch 36/100 - saved diffusion_best.pth (test_loss 0.0284)
+2026-01-18 09:23:07 Epoch 37/100 - train_loss 0.0308 lr 7.48e-05
+2026-01-18 09:24:36 Epoch 37/100 - test_loss 0.0282 diff 0.0036 recon 0.0136 grad 0.0220
+2026-01-18 09:25:59 vis cloudy min 0.0052 max 1.0000 mean 0.1868 p1 0.0227 p99 0.7587 <0 0.00% >1 0.00%
+2026-01-18 09:25:59 vis pred min -5272.5942 max 2391.2827 mean -732.8625 p1 -1190.7653 p99 -496.3534 <0 99.97% >1 0.03%
+2026-01-18 09:25:59 vis clear min 0.0017 max 0.6851 mean 0.1198 p1 0.0327 p99 0.3225 <0 0.00% >1 0.00%
+2026-01-18 09:25:59 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 09:25:59 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 09:26:04 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_037.png
+2026-01-18 09:26:08 Epoch 37/100 - checkpoints saved
+2026-01-18 09:26:10 Epoch 37/100 - saved diffusion_best.pth (test_loss 0.0282)
+2026-01-18 09:47:23 Epoch 38/100 - train_loss 0.0300 lr 7.33e-05
+2026-01-18 09:48:51 Epoch 38/100 - test_loss 0.0282 diff 0.0036 recon 0.0139 grad 0.0215
+2026-01-18 09:50:14 vis cloudy min 0.0012 max 1.0000 mean 0.2040 p1 0.0145 p99 0.7562 <0 0.00% >1 0.00%
+2026-01-18 09:50:14 vis pred min -2696.6704 max 2255.3289 mean -689.6985 p1 -959.4255 p99 -509.3834 <0 100.00% >1 0.00%
+2026-01-18 09:50:14 vis clear min 0.0001 max 0.5317 mean 0.1250 p1 0.0049 p99 0.3386 <0 0.00% >1 0.00%
+2026-01-18 09:50:14 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 09:50:14 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 09:50:19 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_038.png
+2026-01-18 09:50:23 Epoch 38/100 - checkpoints saved
+2026-01-18 09:50:25 Epoch 38/100 - saved diffusion_best.pth (test_loss 0.0282)
+2026-01-18 10:11:43 Epoch 39/100 - train_loss 0.0297 lr 7.19e-05
+2026-01-18 10:13:12 Epoch 39/100 - test_loss 0.0281 diff 0.0035 recon 0.0139 grad 0.0213
+2026-01-18 10:14:34 vis cloudy min 0.0012 max 1.0000 mean 0.2347 p1 0.0099 p99 0.7458 <0 0.00% >1 0.00%
+2026-01-18 10:14:34 vis pred min -2830.2961 max 1643.4985 mean -626.4317 p1 -848.4678 p99 -393.8845 <0 100.00% >1 0.00%
+2026-01-18 10:14:34 vis clear min 0.0016 max 0.8225 mean 0.1602 p1 0.0087 p99 0.4071 <0 0.00% >1 0.00%
+2026-01-18 10:14:34 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 10:14:34 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 10:14:39 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_039.png
+2026-01-18 10:14:43 Epoch 39/100 - checkpoints saved
+2026-01-18 10:14:45 Epoch 39/100 - saved diffusion_best.pth (test_loss 0.0281)
+2026-01-18 10:35:57 Epoch 40/100 - train_loss 0.0296 lr 7.04e-05
+2026-01-18 10:37:26 Epoch 40/100 - test_loss 0.0279 diff 0.0035 recon 0.0137 grad 0.0215
+2026-01-18 10:38:49 vis cloudy min 0.0015 max 1.0000 mean 0.2417 p1 0.0139 p99 0.8465 <0 0.00% >1 0.00%
+2026-01-18 10:38:49 vis pred min -2551.6714 max 1101.8403 mean -627.9586 p1 -863.8212 p99 -424.5599 <0 100.00% >1 0.00%
+2026-01-18 10:38:49 vis clear min 0.0023 max 1.0000 mean 0.1334 p1 0.0063 p99 0.3738 <0 0.00% >1 0.00%
+2026-01-18 10:38:49 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 10:38:49 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 10:38:54 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_040.png
+2026-01-18 10:38:57 Epoch 40/100 - checkpoints saved
+2026-01-18 10:38:59 Epoch 40/100 - saved diffusion_best.pth (test_loss 0.0279)
+2026-01-18 11:00:19 Epoch 41/100 - train_loss 0.0289 lr 6.89e-05
+2026-01-18 11:01:47 Epoch 41/100 - test_loss 0.0277 diff 0.0035 recon 0.0135 grad 0.0214
+2026-01-18 11:03:10 vis cloudy min 0.0043 max 1.0000 mean 0.2204 p1 0.0187 p99 0.6207 <0 0.00% >1 0.00%
+2026-01-18 11:03:10 vis pred min -2411.4375 max 1047.4585 mean -603.5042 p1 -816.5206 p99 -440.1448 <0 100.00% >1 0.00%
+2026-01-18 11:03:10 vis clear min 0.0080 max 0.7534 mean 0.1462 p1 0.0311 p99 0.3731 <0 0.00% >1 0.00%
+2026-01-18 11:03:10 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 11:03:10 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 11:03:16 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_041.png
+2026-01-18 11:03:19 Epoch 41/100 - checkpoints saved
+2026-01-18 11:03:21 Epoch 41/100 - saved diffusion_best.pth (test_loss 0.0277)
+2026-01-18 11:24:31 Epoch 42/100 - train_loss 0.0289 lr 6.73e-05
+2026-01-18 11:26:00 Epoch 42/100 - test_loss 0.0276 diff 0.0035 recon 0.0134 grad 0.0213
+2026-01-18 11:27:22 vis cloudy min 0.0030 max 1.0000 mean 0.1836 p1 0.0164 p99 0.6394 <0 0.00% >1 0.00%
+2026-01-18 11:27:23 vis pred min -2264.1721 max 782.9856 mean -534.3305 p1 -734.8334 p99 -318.8325 <0 100.00% >1 0.00%
+2026-01-18 11:27:23 vis clear min 0.0001 max 0.8798 mean 0.1154 p1 0.0016 p99 0.3324 <0 0.00% >1 0.00%
+2026-01-18 11:27:23 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 11:27:23 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 11:27:28 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_042.png
+2026-01-18 11:27:31 Epoch 42/100 - checkpoints saved
+2026-01-18 11:27:34 Epoch 42/100 - saved diffusion_best.pth (test_loss 0.0276)
+2026-01-18 11:48:51 Epoch 43/100 - train_loss 0.0291 lr 6.58e-05
+2026-01-18 11:50:20 Epoch 43/100 - test_loss 0.0277 diff 0.0035 recon 0.0137 grad 0.0208
+2026-01-18 11:51:43 vis cloudy min 0.0006 max 1.0000 mean 0.1472 p1 0.0089 p99 0.6211 <0 0.00% >1 0.00%
+2026-01-18 11:51:43 vis pred min -1674.2478 max 649.5659 mean -594.0792 p1 -755.0461 p99 -448.5636 <0 100.00% >1 0.00%
+2026-01-18 11:51:43 vis clear min 0.0003 max 0.8285 mean 0.1296 p1 0.0358 p99 0.2697 <0 0.00% >1 0.00%
+2026-01-18 11:51:43 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 11:51:43 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 11:51:48 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_043.png
+2026-01-18 11:51:52 Epoch 43/100 - checkpoints saved
+2026-01-18 12:13:06 Epoch 44/100 - train_loss 0.0276 lr 6.42e-05
+2026-01-18 12:14:35 Epoch 44/100 - test_loss 0.0276 diff 0.0035 recon 0.0137 grad 0.0207
+2026-01-18 12:15:57 vis cloudy min 0.0040 max 1.0000 mean 0.2741 p1 0.0150 p99 0.9947 <0 0.00% >1 0.00%
+2026-01-18 12:15:58 vis pred min -1542.7310 max 698.3393 mean -514.8599 p1 -680.9946 p99 -389.0752 <0 100.00% >1 0.00%
+2026-01-18 12:15:58 vis clear min 0.0017 max 1.0000 mean 0.1435 p1 0.0359 p99 0.3691 <0 0.00% >1 0.00%
+2026-01-18 12:15:58 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 12:15:58 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 12:16:03 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_044.png
+2026-01-18 12:16:06 Epoch 44/100 - checkpoints saved
+2026-01-18 12:16:08 Epoch 44/100 - saved diffusion_best.pth (test_loss 0.0276)
+2026-01-18 12:37:29 Epoch 45/100 - train_loss 0.0279 lr 6.27e-05
+2026-01-18 12:38:58 Epoch 45/100 - test_loss 0.0274 diff 0.0035 recon 0.0137 grad 0.0206
+2026-01-18 12:40:20 vis cloudy min 0.0001 max 1.0000 mean 0.2300 p1 0.0008 p99 0.7712 <0 0.00% >1 0.00%
+2026-01-18 12:40:20 vis pred min -2216.1243 max 1499.1821 mean -512.1821 p1 -646.7694 p99 -373.6444 <0 100.00% >1 0.00%
+2026-01-18 12:40:21 vis clear min 0.0001 max 1.0000 mean 0.1274 p1 0.0027 p99 0.3408 <0 0.00% >1 0.00%
+2026-01-18 12:40:21 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 12:40:21 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 12:40:25 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_045.png
+2026-01-18 12:40:28 Epoch 45/100 - checkpoints saved
+2026-01-18 12:40:31 Epoch 45/100 - saved diffusion_best.pth (test_loss 0.0274)
+2026-01-18 13:01:43 Epoch 46/100 - train_loss 0.0274 lr 6.11e-05
+2026-01-18 13:03:12 Epoch 46/100 - test_loss 0.0272 diff 0.0035 recon 0.0134 grad 0.0208
+2026-01-18 13:04:35 vis cloudy min 0.0085 max 1.0000 mean 0.2532 p1 0.0337 p99 0.8715 <0 0.00% >1 0.00%
+2026-01-18 13:04:35 vis pred min -2351.9880 max 708.5851 mean -512.7904 p1 -696.5396 p99 -352.2544 <0 100.00% >1 0.00%
+2026-01-18 13:04:35 vis clear min 0.0067 max 1.0000 mean 0.1451 p1 0.0412 p99 0.3587 <0 0.00% >1 0.00%
+2026-01-18 13:04:35 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 13:04:35 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 13:04:40 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_046.png
+2026-01-18 13:04:43 Epoch 46/100 - checkpoints saved
+2026-01-18 13:04:45 Epoch 46/100 - saved diffusion_best.pth (test_loss 0.0272)
+2026-01-18 13:26:04 Epoch 47/100 - train_loss 0.0280 lr 5.95e-05
+2026-01-18 13:27:32 Epoch 47/100 - test_loss 0.0271 diff 0.0034 recon 0.0133 grad 0.0206
+2026-01-18 13:28:55 vis cloudy min 0.0072 max 1.0000 mean 0.2210 p1 0.0269 p99 0.9161 <0 0.00% >1 0.00%
+2026-01-18 13:28:55 vis pred min -1773.0847 max 838.5563 mean -539.9625 p1 -698.0020 p99 -375.6323 <0 100.00% >1 0.00%
+2026-01-18 13:28:55 vis clear min 0.0001 max 1.0000 mean 0.1434 p1 0.0013 p99 0.4466 <0 0.00% >1 0.00%
+2026-01-18 13:28:55 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 13:28:55 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 13:29:01 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_047.png
+2026-01-18 13:29:04 Epoch 47/100 - checkpoints saved
+2026-01-18 13:29:06 Epoch 47/100 - saved diffusion_best.pth (test_loss 0.0271)
+2026-01-18 13:50:19 Epoch 48/100 - train_loss 0.0281 lr 5.78e-05
+2026-01-18 13:51:47 Epoch 48/100 - test_loss 0.0271 diff 0.0034 recon 0.0134 grad 0.0206
+2026-01-18 13:53:10 vis cloudy min 0.0014 max 0.8488 mean 0.1949 p1 0.0057 p99 0.6189 <0 0.00% >1 0.00%
+2026-01-18 13:53:10 vis pred min -1891.1920 max 688.6367 mean -606.0839 p1 -776.8646 p99 -436.9523 <0 100.00% >1 0.00%
+2026-01-18 13:53:10 vis clear min 0.0024 max 1.0000 mean 0.1147 p1 0.0060 p99 0.2844 <0 0.00% >1 0.00%
+2026-01-18 13:53:10 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 13:53:10 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 13:53:16 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_048.png
+2026-01-18 13:53:19 Epoch 48/100 - checkpoints saved
+2026-01-18 14:14:38 Epoch 49/100 - train_loss 0.0267 lr 5.62e-05
+2026-01-18 14:16:06 Epoch 49/100 - test_loss 0.0270 diff 0.0034 recon 0.0133 grad 0.0205
+2026-01-18 14:17:29 vis cloudy min 0.0053 max 0.9621 mean 0.2353 p1 0.0315 p99 0.6296 <0 0.00% >1 0.00%
+2026-01-18 14:17:29 vis pred min -2263.9504 max 1095.9865 mean -563.1134 p1 -756.9995 p99 -345.9285 <0 100.00% >1 0.00%
+2026-01-18 14:17:29 vis clear min 0.0009 max 1.0000 mean 0.1510 p1 0.0219 p99 0.3756 <0 0.00% >1 0.00%
+2026-01-18 14:17:29 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 14:17:29 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 14:17:34 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_049.png
+2026-01-18 14:17:38 Epoch 49/100 - checkpoints saved
+2026-01-18 14:17:40 Epoch 49/100 - saved diffusion_best.pth (test_loss 0.0270)
+2026-01-18 14:38:53 Epoch 50/100 - train_loss 0.0270 lr 5.46e-05
+2026-01-18 14:40:22 Epoch 50/100 - test_loss 0.0269 diff 0.0034 recon 0.0133 grad 0.0204
+2026-01-18 14:41:45 vis cloudy min 0.0001 max 1.0000 mean 0.1817 p1 0.0023 p99 0.6923 <0 0.00% >1 0.00%
+2026-01-18 14:41:45 vis pred min -2219.6001 max 1496.5520 mean -501.8114 p1 -754.0832 p99 -329.1678 <0 100.00% >1 0.00%
+2026-01-18 14:41:45 vis clear min 0.0001 max 0.8101 mean 0.1086 p1 0.0008 p99 0.3275 <0 0.00% >1 0.00%
+2026-01-18 14:41:45 vis auto_scale enabled (ref=clear, per_channel=True, percentiles 1.0-99.0)
+2026-01-18 14:41:45 vis pred out-of-range 100.00% -> use self scale for pred (threshold 5.00%)
+2026-01-18 14:41:50 Saved diffusion visualization to /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260117_182648/vis/diffusion_vis_epoch_050.png
+2026-01-18 14:41:53 Epoch 50/100 - checkpoints saved
+2026-01-18 14:41:55 Epoch 50/100 - saved diffusion_best.pth (test_loss 0.0269)

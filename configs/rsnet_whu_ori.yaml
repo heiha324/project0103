@@ -1,0 +1,66 @@
+seed: 42
+
+model:
+  in_channels: 4
+  base_channels: 32
+  depth: 4
+  use_batchnorm: true
+
+train:
+  batch_size: 16
+  num_epochs: 100
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+  pos_weight: 5.0
+  dice_weight: 1.0
+  amp: false
+  grad_clip: 1.0
+  quiet: false
+  debug:
+    interval: 0
+    all_ranks: true
+    sync_cuda: false
+    first_batch: false
+    trace_steps: 0
+
+data:
+  dataset: "whu_ori"
+  root: "/home/data/cloud_detec_dataset/WHU_Ori"
+  split: "Train"
+  level_subdir: "level1_10m"
+  image_ext: ".npy"
+  mask_ext: ".npy"
+  crop_size: 256
+  base_stride: 128
+  jitter: 16
+  cloud_keep_ratio: 0.2
+  cloud_min_ratio: 0.01
+  bands: [0, 1, 2, 3]
+  s2_clip_min: 0.0
+  s2_clip_max: 1.0
+  num_workers: 4
+  loader:
+    persistent_workers: true
+    prefetch_factor: 2
+    timeout: 30
+
+val:
+  dataset: "whu_ori"
+  root: "/home/data/cloud_detec_dataset/WHU_Ori"
+  split: "Val"
+  level_subdir: "level1_10m"
+  image_ext: ".npy"
+  mask_ext: ".npy"
+  s2_clip_min: 0.0
+  s2_clip_max: 1.0
+  loader:
+    persistent_workers: true
+    prefetch_factor: 2
+    timeout: 30
+
+output:
+  dir: "/home/data/KXShen/model/project0103/rsnet_whu_ori"
+  auto_timestamp: true
+  log_dir: "logs"
+  save_best: true
+  best_score_metric: "score"

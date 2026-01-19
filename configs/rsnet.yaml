@@ -1,0 +1,44 @@
+seed: 42
+
+model:
+  in_channels: 6
+  base_channels: 32
+  depth: 4
+  use_batchnorm: true
+
+train:
+  batch_size: 16
+  num_epochs: 80
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  pos_weight: 5.0
+  dice_weight: 1.0
+  amp: true
+  grad_clip: 1.0
+
+data:
+  root: "data/cloud_dataset"
+  images_subdir: "images"
+  masks_subdir: "masks"
+  image_ext: ".npy"
+  mask_ext: ".npy"
+  crop_size: 256
+  base_stride: 128
+  jitter: 16
+  cloud_keep_ratio: 0.2
+  cloud_min_ratio: 0.01
+  bands: [0, 1, 2, 3, 4, 5]
+  s2_clip_min: 0.0
+  s2_clip_max: 10000.0
+
+val:
+  root: "data/cloud_dataset_val"
+  images_subdir: "images"
+  masks_subdir: "masks"
+  image_ext: ".npy"
+  mask_ext: ".npy"
+
+output:
+  dir: "outputs/rsnet"
+  save_best: true
+  best_score_metric: "score"

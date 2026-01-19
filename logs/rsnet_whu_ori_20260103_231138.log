@@ -1,0 +1,217 @@
+2026-01-03 23:11:39 Run timestamp: 20260103_231138
+2026-01-03 23:11:39 Output dir: /home/data/KXShen/model/project0103/rsnet_whu_ori_20260103_231138
+2026-01-03 23:11:39 World size: 4, rank: 0
+2026-01-03 23:11:39 Config: configs/rsnet_whu_ori.yaml
+2026-01-03 23:13:22 Epoch 1: saved rsnet_last.pth
+2026-01-03 23:13:22 Epoch 1: saved rsnet_best.pth
+2026-01-03 23:13:22 Epoch 1/100 - OA 0.962 Pre 0.188 FAR 0.027 Recall 0.906 F1 0.166 IoU 0.138 Score 0.585
+2026-01-03 23:14:54 Epoch 2: saved rsnet_last.pth
+2026-01-03 23:14:54 Epoch 2: saved rsnet_best.pth
+2026-01-03 23:14:54 Epoch 2/100 - OA 0.970 Pre 0.235 FAR 0.017 Recall 0.904 F1 0.210 IoU 0.180 Score 0.628
+2026-01-03 23:16:24 Epoch 3: saved rsnet_last.pth
+2026-01-03 23:16:24 Epoch 3/100 - OA 0.905 Pre 0.158 FAR 0.087 Recall 0.921 F1 0.149 IoU 0.121 Score 0.559
+2026-01-03 23:17:54 Epoch 4: saved rsnet_last.pth
+2026-01-03 23:17:54 Epoch 4/100 - OA 0.915 Pre 0.199 FAR 0.078 Recall 0.925 F1 0.190 IoU 0.162 Score 0.605
+2026-01-03 23:19:23 Epoch 5: saved rsnet_last.pth
+2026-01-03 23:19:23 Epoch 5: saved rsnet_best.pth
+2026-01-03 23:19:23 Epoch 5/100 - OA 0.928 Pre 0.236 FAR 0.063 Recall 0.917 F1 0.217 IoU 0.188 Score 0.631
+2026-01-03 23:20:52 Epoch 6: saved rsnet_last.pth
+2026-01-03 23:20:52 Epoch 6: saved rsnet_best.pth
+2026-01-03 23:20:52 Epoch 6/100 - OA 0.948 Pre 0.303 FAR 0.038 Recall 0.894 F1 0.264 IoU 0.235 Score 0.673
+2026-01-03 23:22:22 Epoch 7: saved rsnet_last.pth
+2026-01-03 23:22:22 Epoch 7: saved rsnet_best.pth
+2026-01-03 23:22:22 Epoch 7/100 - OA 0.977 Pre 0.421 FAR 0.013 Recall 0.906 F1 0.389 IoU 0.361 Score 0.811
+2026-01-03 23:23:51 Epoch 8: saved rsnet_last.pth
+2026-01-03 23:23:51 Epoch 8/100 - OA 0.969 Pre 0.242 FAR 0.021 Recall 0.911 F1 0.217 IoU 0.189 Score 0.639
+2026-01-03 23:25:20 Epoch 9: saved rsnet_last.pth
+2026-01-03 23:25:20 Epoch 9/100 - OA 0.973 Pre 0.282 FAR 0.017 Recall 0.910 F1 0.257 IoU 0.228 Score 0.679
+2026-01-03 23:26:49 Epoch 10: saved rsnet_last.pth
+2026-01-03 23:26:49 Epoch 10/100 - OA 0.967 Pre 0.294 FAR 0.022 Recall 0.905 F1 0.264 IoU 0.236 Score 0.683
+2026-01-03 23:28:19 Epoch 11: saved rsnet_last.pth
+2026-01-03 23:28:19 Epoch 11/100 - OA 0.942 Pre 0.177 FAR 0.048 Recall 0.914 F1 0.156 IoU 0.127 Score 0.573
+2026-01-03 23:29:48 Epoch 12: saved rsnet_last.pth
+2026-01-03 23:29:48 Epoch 12: saved rsnet_best.pth
+2026-01-03 23:29:48 Epoch 12/100 - OA 0.973 Pre 0.495 FAR 0.014 Recall 0.891 F1 0.450 IoU 0.422 Score 0.864
+2026-01-03 23:31:17 Epoch 13: saved rsnet_last.pth
+2026-01-03 23:31:17 Epoch 13/100 - OA 0.941 Pre 0.290 FAR 0.050 Recall 0.916 F1 0.267 IoU 0.239 Score 0.684
+2026-01-03 23:32:47 Epoch 14: saved rsnet_last.pth
+2026-01-03 23:32:47 Epoch 14/100 - OA 0.973 Pre 0.306 FAR 0.017 Recall 0.918 F1 0.284 IoU 0.255 Score 0.709
+2026-01-03 23:34:17 Epoch 15: saved rsnet_last.pth
+2026-01-03 23:34:17 Epoch 15/100 - OA 0.949 Pre 0.256 FAR 0.043 Recall 0.921 F1 0.239 IoU 0.210 Score 0.659
+2026-01-03 23:35:47 Epoch 16: saved rsnet_last.pth
+2026-01-03 23:35:47 Epoch 16/100 - OA 0.965 Pre 0.405 FAR 0.026 Recall 0.918 F1 0.380 IoU 0.352 Score 0.804
+2026-01-03 23:37:16 Epoch 17: saved rsnet_last.pth
+2026-01-03 23:37:16 Epoch 17/100 - OA 0.969 Pre 0.326 FAR 0.022 Recall 0.917 F1 0.302 IoU 0.273 Score 0.726
+2026-01-03 23:38:45 Epoch 18: saved rsnet_last.pth
+2026-01-03 23:38:45 Epoch 18/100 - OA 0.956 Pre 0.254 FAR 0.038 Recall 0.932 F1 0.243 IoU 0.215 Score 0.672
+2026-01-03 23:40:14 Epoch 19: saved rsnet_last.pth
+2026-01-03 23:40:14 Epoch 19/100 - OA 0.975 Pre 0.309 FAR 0.017 Recall 0.923 F1 0.290 IoU 0.261 Score 0.718
+2026-01-03 23:41:43 Epoch 20: saved rsnet_last.pth
+2026-01-03 23:41:43 Epoch 20/100 - OA 0.966 Pre 0.332 FAR 0.024 Recall 0.914 F1 0.304 IoU 0.275 Score 0.726
+2026-01-03 23:43:13 Epoch 21: saved rsnet_last.pth
+2026-01-03 23:43:13 Epoch 21/100 - OA 0.963 Pre 0.309 FAR 0.027 Recall 0.911 F1 0.279 IoU 0.251 Score 0.700
+2026-01-03 23:44:42 Epoch 22: saved rsnet_last.pth
+2026-01-03 23:44:42 Epoch 22/100 - OA 0.967 Pre 0.361 FAR 0.023 Recall 0.918 F1 0.340 IoU 0.311 Score 0.764
+2026-01-03 23:46:11 Epoch 23: saved rsnet_last.pth
+2026-01-03 23:46:11 Epoch 23: saved rsnet_best.pth
+2026-01-03 23:46:11 Epoch 23/100 - OA 0.976 Pre 0.490 FAR 0.011 Recall 0.904 F1 0.456 IoU 0.427 Score 0.876
+2026-01-03 23:47:40 Epoch 24: saved rsnet_last.pth
+2026-01-03 23:47:40 Epoch 24/100 - OA 0.947 Pre 0.332 FAR 0.043 Recall 0.919 F1 0.310 IoU 0.281 Score 0.730
+2026-01-03 23:49:10 Epoch 25: saved rsnet_last.pth
+2026-01-03 23:49:10 Epoch 25/100 - OA 0.972 Pre 0.297 FAR 0.021 Recall 0.927 F1 0.281 IoU 0.252 Score 0.710
+2026-01-03 23:50:40 Epoch 26: saved rsnet_last.pth
+2026-01-03 23:50:40 Epoch 26/100 - OA 0.969 Pre 0.213 FAR 0.021 Recall 0.915 F1 0.191 IoU 0.162 Score 0.614
+2026-01-03 23:52:10 Epoch 27: saved rsnet_last.pth
+2026-01-03 23:52:10 Epoch 27/100 - OA 0.966 Pre 0.409 FAR 0.024 Recall 0.913 F1 0.379 IoU 0.350 Score 0.801
+2026-01-03 23:53:40 Epoch 28: saved rsnet_last.pth
+2026-01-03 23:53:40 Epoch 28/100 - OA 0.974 Pre 0.277 FAR 0.017 Recall 0.923 F1 0.261 IoU 0.232 Score 0.689
+2026-01-03 23:55:10 Epoch 29: saved rsnet_last.pth
+2026-01-03 23:55:10 Epoch 29/100 - OA 0.963 Pre 0.246 FAR 0.030 Recall 0.931 F1 0.234 IoU 0.205 Score 0.663
+2026-01-03 23:56:39 Epoch 30: saved rsnet_last.pth
+2026-01-03 23:56:39 Epoch 30/100 - OA 0.967 Pre 0.339 FAR 0.023 Recall 0.916 F1 0.315 IoU 0.286 Score 0.738
+2026-01-03 23:58:10 Epoch 31: saved rsnet_last.pth
+2026-01-03 23:58:10 Epoch 31/100 - OA 0.971 Pre 0.394 FAR 0.018 Recall 0.907 F1 0.361 IoU 0.333 Score 0.782
+2026-01-03 23:59:40 Epoch 32: saved rsnet_last.pth
+2026-01-03 23:59:40 Epoch 32/100 - OA 0.959 Pre 0.406 FAR 0.028 Recall 0.902 F1 0.371 IoU 0.342 Score 0.786
+2026-01-04 00:01:10 Epoch 33: saved rsnet_last.pth
+2026-01-04 00:01:10 Epoch 33/100 - OA 0.968 Pre 0.315 FAR 0.020 Recall 0.908 F1 0.285 IoU 0.256 Score 0.705
+2026-01-04 00:02:41 Epoch 34: saved rsnet_last.pth
+2026-01-04 00:02:41 Epoch 34/100 - OA 0.969 Pre 0.335 FAR 0.022 Recall 0.916 F1 0.310 IoU 0.282 Score 0.734
+2026-01-04 00:04:12 Epoch 35: saved rsnet_last.pth
+2026-01-04 00:04:12 Epoch 35/100 - OA 0.974 Pre 0.449 FAR 0.013 Recall 0.903 F1 0.412 IoU 0.383 Score 0.831
+2026-01-04 00:05:43 Epoch 36: saved rsnet_last.pth
+2026-01-04 00:05:43 Epoch 36/100 - OA 0.967 Pre 0.330 FAR 0.027 Recall 0.930 F1 0.316 IoU 0.287 Score 0.746
+2026-01-04 00:07:14 Epoch 37: saved rsnet_last.pth
+2026-01-04 00:07:14 Epoch 37/100 - OA 0.962 Pre 0.402 FAR 0.027 Recall 0.908 F1 0.372 IoU 0.343 Score 0.791
+2026-01-04 00:08:45 Epoch 38: saved rsnet_last.pth
+2026-01-04 00:08:45 Epoch 38/100 - OA 0.956 Pre 0.303 FAR 0.034 Recall 0.911 F1 0.275 IoU 0.246 Score 0.693
+2026-01-04 00:10:15 Epoch 39: saved rsnet_last.pth
+2026-01-04 00:10:15 Epoch 39/100 - OA 0.972 Pre 0.466 FAR 0.017 Recall 0.905 F1 0.429 IoU 0.400 Score 0.848
+2026-01-04 00:11:46 Epoch 40: saved rsnet_last.pth
+2026-01-04 00:11:46 Epoch 40/100 - OA 0.967 Pre 0.285 FAR 0.025 Recall 0.925 F1 0.268 IoU 0.239 Score 0.695
+2026-01-04 00:13:16 Epoch 41: saved rsnet_last.pth
+2026-01-04 00:13:16 Epoch 41/100 - OA 0.971 Pre 0.378 FAR 0.021 Recall 0.921 F1 0.358 IoU 0.330 Score 0.785
+2026-01-04 00:14:47 Epoch 42: saved rsnet_last.pth
+2026-01-04 00:14:47 Epoch 42/100 - OA 0.973 Pre 0.271 FAR 0.018 Recall 0.919 F1 0.252 IoU 0.223 Score 0.678
+2026-01-04 00:16:17 Epoch 43: saved rsnet_last.pth
+2026-01-04 00:16:17 Epoch 43/100 - OA 0.967 Pre 0.268 FAR 0.025 Recall 0.921 F1 0.249 IoU 0.220 Score 0.675
+2026-01-04 00:17:49 Epoch 44: saved rsnet_last.pth
+2026-01-04 00:17:49 Epoch 44/100 - OA 0.967 Pre 0.331 FAR 0.022 Recall 0.910 F1 0.304 IoU 0.276 Score 0.725
+2026-01-04 00:19:19 Epoch 45: saved rsnet_last.pth
+2026-01-04 00:19:19 Epoch 45/100 - OA 0.967 Pre 0.399 FAR 0.019 Recall 0.903 F1 0.365 IoU 0.336 Score 0.782
+2026-01-04 00:20:50 Epoch 46: saved rsnet_last.pth
+2026-01-04 00:20:50 Epoch 46/100 - OA 0.954 Pre 0.388 FAR 0.036 Recall 0.913 F1 0.360 IoU 0.332 Score 0.779
+2026-01-04 00:22:20 Epoch 47: saved rsnet_last.pth
+2026-01-04 00:22:20 Epoch 47/100 - OA 0.963 Pre 0.311 FAR 0.026 Recall 0.910 F1 0.284 IoU 0.255 Score 0.703
+2026-01-04 00:23:51 Epoch 48: saved rsnet_last.pth
+2026-01-04 00:23:51 Epoch 48/100 - OA 0.947 Pre 0.327 FAR 0.040 Recall 0.901 F1 0.291 IoU 0.262 Score 0.702
+2026-01-04 00:25:22 Epoch 49: saved rsnet_last.pth
+2026-01-04 00:25:22 Epoch 49: saved rsnet_best.pth
+2026-01-04 00:25:22 Epoch 49/100 - OA 0.970 Pre 0.500 FAR 0.018 Recall 0.908 F1 0.469 IoU 0.439 Score 0.889
+2026-01-04 00:26:53 Epoch 50: saved rsnet_last.pth
+2026-01-04 00:26:53 Epoch 50/100 - OA 0.964 Pre 0.313 FAR 0.024 Recall 0.908 F1 0.284 IoU 0.254 Score 0.702
+2026-01-04 00:28:24 Epoch 51: saved rsnet_last.pth
+2026-01-04 00:28:24 Epoch 51/100 - OA 0.956 Pre 0.282 FAR 0.036 Recall 0.925 F1 0.270 IoU 0.241 Score 0.694
+2026-01-04 00:29:55 Epoch 52: saved rsnet_last.pth
+2026-01-04 00:29:55 Epoch 52/100 - OA 0.972 Pre 0.377 FAR 0.015 Recall 0.898 F1 0.338 IoU 0.309 Score 0.755
+2026-01-04 00:31:25 Epoch 53: saved rsnet_last.pth
+2026-01-04 00:31:25 Epoch 53/100 - OA 0.978 Pre 0.400 FAR 0.009 Recall 0.895 F1 0.362 IoU 0.332 Score 0.778
+2026-01-04 00:32:56 Epoch 54: saved rsnet_last.pth
+2026-01-04 00:32:56 Epoch 54: saved rsnet_best.pth
+2026-01-04 00:32:56 Epoch 54/100 - OA 0.976 Pre 0.554 FAR 0.012 Recall 0.902 F1 0.517 IoU 0.488 Score 0.936
+2026-01-04 00:34:27 Epoch 55: saved rsnet_last.pth
+2026-01-04 00:34:27 Epoch 55/100 - OA 0.967 Pre 0.373 FAR 0.022 Recall 0.912 F1 0.346 IoU 0.317 Score 0.767
+2026-01-04 00:35:57 Epoch 56: saved rsnet_last.pth
+2026-01-04 00:35:57 Epoch 56/100 - OA 0.969 Pre 0.387 FAR 0.021 Recall 0.916 F1 0.363 IoU 0.335 Score 0.787
+2026-01-04 00:37:27 Epoch 57: saved rsnet_last.pth
+2026-01-04 00:37:27 Epoch 57/100 - OA 0.964 Pre 0.350 FAR 0.024 Recall 0.909 F1 0.321 IoU 0.292 Score 0.740
+2026-01-04 00:38:57 Epoch 58: saved rsnet_last.pth
+2026-01-04 00:38:57 Epoch 58/100 - OA 0.973 Pre 0.400 FAR 0.016 Recall 0.912 F1 0.373 IoU 0.345 Score 0.796
+2026-01-04 00:40:28 Epoch 59: saved rsnet_last.pth
+2026-01-04 00:40:28 Epoch 59/100 - OA 0.976 Pre 0.522 FAR 0.009 Recall 0.897 F1 0.480 IoU 0.451 Score 0.897
+2026-01-04 00:41:59 Epoch 60: saved rsnet_last.pth
+2026-01-04 00:41:59 Epoch 60/100 - OA 0.960 Pre 0.338 FAR 0.031 Recall 0.920 F1 0.317 IoU 0.288 Score 0.740
+2026-01-04 00:43:30 Epoch 61: saved rsnet_last.pth
+2026-01-04 00:43:30 Epoch 61/100 - OA 0.969 Pre 0.354 FAR 0.022 Recall 0.916 F1 0.329 IoU 0.300 Score 0.752
+2026-01-04 00:45:01 Epoch 62: saved rsnet_last.pth
+2026-01-04 00:45:01 Epoch 62/100 - OA 0.972 Pre 0.383 FAR 0.015 Recall 0.899 F1 0.345 IoU 0.316 Score 0.762
+2026-01-04 00:46:32 Epoch 63: saved rsnet_last.pth
+2026-01-04 00:46:32 Epoch 63/100 - OA 0.970 Pre 0.363 FAR 0.018 Recall 0.901 F1 0.327 IoU 0.298 Score 0.744
+2026-01-04 00:48:03 Epoch 64: saved rsnet_last.pth
+2026-01-04 00:48:03 Epoch 64/100 - OA 0.966 Pre 0.414 FAR 0.022 Recall 0.902 F1 0.381 IoU 0.353 Score 0.798
+2026-01-04 00:49:34 Epoch 65: saved rsnet_last.pth
+2026-01-04 00:49:34 Epoch 65/100 - OA 0.966 Pre 0.342 FAR 0.024 Recall 0.915 F1 0.320 IoU 0.291 Score 0.743
+2026-01-04 00:51:04 Epoch 66: saved rsnet_last.pth
+2026-01-04 00:51:04 Epoch 66/100 - OA 0.973 Pre 0.404 FAR 0.016 Recall 0.909 F1 0.375 IoU 0.346 Score 0.797
+2026-01-04 00:52:35 Epoch 67: saved rsnet_last.pth
+2026-01-04 00:52:35 Epoch 67/100 - OA 0.972 Pre 0.435 FAR 0.015 Recall 0.898 F1 0.395 IoU 0.366 Score 0.811
+2026-01-04 00:54:06 Epoch 68: saved rsnet_last.pth
+2026-01-04 00:54:06 Epoch 68/100 - OA 0.963 Pre 0.310 FAR 0.024 Recall 0.904 F1 0.277 IoU 0.248 Score 0.694
+2026-01-04 00:55:37 Epoch 69: saved rsnet_last.pth
+2026-01-04 00:55:37 Epoch 69/100 - OA 0.968 Pre 0.278 FAR 0.020 Recall 0.908 F1 0.248 IoU 0.219 Score 0.668
+2026-01-04 00:57:08 Epoch 70: saved rsnet_last.pth
+2026-01-04 00:57:08 Epoch 70/100 - OA 0.962 Pre 0.223 FAR 0.024 Recall 0.902 F1 0.189 IoU 0.159 Score 0.604
+2026-01-04 00:58:38 Epoch 71: saved rsnet_last.pth
+2026-01-04 00:58:38 Epoch 71/100 - OA 0.972 Pre 0.351 FAR 0.015 Recall 0.902 F1 0.317 IoU 0.288 Score 0.735
+2026-01-04 01:00:09 Epoch 72: saved rsnet_last.pth
+2026-01-04 01:00:09 Epoch 72/100 - OA 0.968 Pre 0.477 FAR 0.020 Recall 0.906 F1 0.444 IoU 0.415 Score 0.863
+2026-01-04 01:01:41 Epoch 73: saved rsnet_last.pth
+2026-01-04 01:01:41 Epoch 73/100 - OA 0.973 Pre 0.419 FAR 0.015 Recall 0.901 F1 0.384 IoU 0.356 Score 0.803
+2026-01-04 01:03:13 Epoch 74: saved rsnet_last.pth
+2026-01-04 01:03:13 Epoch 74/100 - OA 0.972 Pre 0.502 FAR 0.015 Recall 0.900 F1 0.463 IoU 0.435 Score 0.881
+2026-01-04 01:04:44 Epoch 75: saved rsnet_last.pth
+2026-01-04 01:04:44 Epoch 75/100 - OA 0.962 Pre 0.343 FAR 0.027 Recall 0.906 F1 0.310 IoU 0.282 Score 0.728
+2026-01-04 01:06:15 Epoch 76: saved rsnet_last.pth
+2026-01-04 01:06:15 Epoch 76/100 - OA 0.971 Pre 0.357 FAR 0.017 Recall 0.905 F1 0.324 IoU 0.295 Score 0.744
+2026-01-04 01:07:45 Epoch 77: saved rsnet_last.pth
+2026-01-04 01:07:45 Epoch 77/100 - OA 0.969 Pre 0.317 FAR 0.021 Recall 0.912 F1 0.290 IoU 0.261 Score 0.713
+2026-01-04 01:09:16 Epoch 78: saved rsnet_last.pth
+2026-01-04 01:09:16 Epoch 78/100 - OA 0.972 Pre 0.497 FAR 0.014 Recall 0.896 F1 0.457 IoU 0.427 Score 0.872
+2026-01-04 01:10:47 Epoch 79: saved rsnet_last.pth
+2026-01-04 01:10:47 Epoch 79/100 - OA 0.952 Pre 0.459 FAR 0.037 Recall 0.910 F1 0.429 IoU 0.400 Score 0.846
+2026-01-04 01:12:18 Epoch 80: saved rsnet_last.pth
+2026-01-04 01:12:18 Epoch 80: saved rsnet_best.pth
+2026-01-04 01:12:18 Epoch 80/100 - OA 0.967 Pre 0.597 FAR 0.022 Recall 0.911 F1 0.566 IoU 0.537 Score 0.987
+2026-01-04 01:13:49 Epoch 81: saved rsnet_last.pth
+2026-01-04 01:13:49 Epoch 81/100 - OA 0.972 Pre 0.515 FAR 0.016 Recall 0.909 F1 0.487 IoU 0.458 Score 0.909
+2026-01-04 01:15:20 Epoch 82: saved rsnet_last.pth
+2026-01-04 01:15:20 Epoch 82/100 - OA 0.967 Pre 0.443 FAR 0.022 Recall 0.910 F1 0.415 IoU 0.385 Score 0.835
+2026-01-04 01:16:50 Epoch 83: saved rsnet_last.pth
+2026-01-04 01:16:50 Epoch 83/100 - OA 0.969 Pre 0.534 FAR 0.017 Recall 0.897 F1 0.493 IoU 0.464 Score 0.908
+2026-01-04 01:18:19 Epoch 84: saved rsnet_last.pth
+2026-01-04 01:18:19 Epoch 84: saved rsnet_best.pth
+2026-01-04 01:18:19 Epoch 84/100 - OA 0.975 Pre 0.628 FAR 0.012 Recall 0.903 F1 0.593 IoU 0.564 Score 1.012
+2026-01-04 01:19:48 Epoch 85: saved rsnet_last.pth
+2026-01-04 01:19:48 Epoch 85/100 - OA 0.969 Pre 0.506 FAR 0.021 Recall 0.912 F1 0.481 IoU 0.452 Score 0.903
+2026-01-04 01:21:17 Epoch 86: saved rsnet_last.pth
+2026-01-04 01:21:17 Epoch 86/100 - OA 0.976 Pre 0.591 FAR 0.012 Recall 0.903 F1 0.554 IoU 0.525 Score 0.973
+2026-01-04 01:22:46 Epoch 87: saved rsnet_last.pth
+2026-01-04 01:22:46 Epoch 87: saved rsnet_best.pth
+2026-01-04 01:22:46 Epoch 87/100 - OA 0.973 Pre 0.648 FAR 0.012 Recall 0.893 F1 0.603 IoU 0.574 Score 1.018
+2026-01-04 01:24:15 Epoch 88: saved rsnet_last.pth
+2026-01-04 01:24:15 Epoch 88/100 - OA 0.935 Pre 0.387 FAR 0.054 Recall 0.911 F1 0.362 IoU 0.333 Score 0.776
+2026-01-04 01:25:44 Epoch 89: saved rsnet_last.pth
+2026-01-04 01:25:44 Epoch 89/100 - OA 0.962 Pre 0.523 FAR 0.026 Recall 0.906 F1 0.490 IoU 0.461 Score 0.908
+2026-01-04 01:27:14 Epoch 90: saved rsnet_last.pth
+2026-01-04 01:27:14 Epoch 90/100 - OA 0.966 Pre 0.445 FAR 0.023 Recall 0.911 F1 0.418 IoU 0.389 Score 0.839
+2026-01-04 01:28:43 Epoch 91: saved rsnet_last.pth
+2026-01-04 01:28:43 Epoch 91/100 - OA 0.970 Pre 0.610 FAR 0.017 Recall 0.900 F1 0.574 IoU 0.545 Score 0.991
+2026-01-04 01:30:13 Epoch 92: saved rsnet_last.pth
+2026-01-04 01:30:13 Epoch 92/100 - OA 0.963 Pre 0.470 FAR 0.026 Recall 0.914 F1 0.443 IoU 0.414 Score 0.864
+2026-01-04 01:31:43 Epoch 93: saved rsnet_last.pth
+2026-01-04 01:31:43 Epoch 93/100 - OA 0.972 Pre 0.549 FAR 0.016 Recall 0.907 F1 0.518 IoU 0.489 Score 0.938
+2026-01-04 01:33:14 Epoch 94: saved rsnet_last.pth
+2026-01-04 01:33:14 Epoch 94/100 - OA 0.964 Pre 0.564 FAR 0.021 Recall 0.895 F1 0.521 IoU 0.492 Score 0.934
+2026-01-04 01:34:44 Epoch 95: saved rsnet_last.pth
+2026-01-04 01:34:44 Epoch 95/100 - OA 0.963 Pre 0.536 FAR 0.023 Recall 0.896 F1 0.495 IoU 0.466 Score 0.909
+2026-01-04 01:36:15 Epoch 96: saved rsnet_last.pth
+2026-01-04 01:36:15 Epoch 96/100 - OA 0.971 Pre 0.539 FAR 0.014 Recall 0.896 F1 0.498 IoU 0.468 Score 0.913
+2026-01-04 01:37:45 Epoch 97: saved rsnet_last.pth
+2026-01-04 01:37:45 Epoch 97/100 - OA 0.970 Pre 0.477 FAR 0.019 Recall 0.907 F1 0.444 IoU 0.415 Score 0.864
+2026-01-04 01:39:16 Epoch 98: saved rsnet_last.pth
+2026-01-04 01:39:16 Epoch 98/100 - OA 0.971 Pre 0.584 FAR 0.016 Recall 0.898 F1 0.544 IoU 0.515 Score 0.960
+2026-01-04 01:40:47 Epoch 99: saved rsnet_last.pth
+2026-01-04 01:40:47 Epoch 99: saved rsnet_best.pth
+2026-01-04 01:40:47 Epoch 99/100 - OA 0.972 Pre 0.699 FAR 0.013 Recall 0.893 F1 0.653 IoU 0.623 Score 1.066
+2026-01-04 01:42:17 Epoch 100: saved rsnet_last.pth
+2026-01-04 01:42:17 Epoch 100/100 - OA 0.974 Pre 0.557 FAR 0.012 Recall 0.901 F1 0.521 IoU 0.491 Score 0.939
