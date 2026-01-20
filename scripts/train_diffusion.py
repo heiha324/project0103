@@ -55,6 +55,9 @@ from sarcloud.diffusion.sampling import sample_batch
 from sarcloud.models.cond_unet import ConditionalUNet
 from sarcloud.training.ema import EMA
 from sarcloud.utils.config import load_config
+from sarcloud.utils.metrics import (
+    mae, mse, rmse, nrmse, psnr, ssim, ms_ssim, sam, ergas, cc, uiqi, rase
+)
 
 
 def set_seed(seed: int) -> None:
@@ -243,10 +246,10 @@ def evaluate(
     
     model.eval()
     totals = {
-        "loss": 0.0,
-        "diff": 0.0,
-        "recon": 0.0,
-        "grad": 0.0,
+        "loss": 0.0, "diff": 0.0, "recon": 0.0, "grad": 0.0,
+        "mae": 0.0, "mse": 0.0, "rmse": 0.0, "nrmse": 0.0,
+        "psnr": 0.0, "ssim": 0.0, "ms_ssim": 0.0, "sam": 0.0,
+        "ergas": 0.0, "cc": 0.0, "uiqi": 0.0, "rase": 0.0,
     }
     steps = 0
     
@@ -302,11 +305,40 @@ def evaluate(
                 recon_weight = cfg["loss"].get("recon_weight", 1.0)
                 grad_weight = cfg["loss"].get("grad_weight", 0.5)
                 loss = loss_diff + recon_weight * loss_recon + grad_weight * loss_grad
+                
+                # 计算详细指标
+                x0_p = x0_pred.detach().float()
+                x0_t = x0.detach().float()
+                m_mae = mae(x0_p, x0_t)
+                m_mse = mse(x0_p, x0_t)
+                m_rmse = rmse(x0_p, x0_t)
+                m_nrmse = nrmse(x0_p, x0_t)
+                m_psnr = psnr(x0_p, x0_t)
+                m_ssim = ssim(x0_p, x0_t)
+                m_ms_ssim = ms_ssim(x0_p, x0_t)
+                m_sam = sam(x0_p, x0_t)
+                m_ergas = ergas(x0_p, x0_t)
+                m_cc = cc(x0_p, x0_t)
+                m_uiqi = uiqi(x0_p, x0_t)
+                m_rase = rase(x0_p, x0_t)
 
             totals["loss"] += float(loss.item())
             totals["diff"] += float(loss_diff.item())
             totals["recon"] += float(loss_recon.item())
             totals["grad"] += float(loss_grad.item())
+            totals["mae"] += m_mae
+            totals["mse"] += m_mse
+            totals["rmse"] += m_rmse
+            totals["nrmse"] += m_nrmse
+            totals["psnr"] += m_psnr
+            totals["ssim"] += m_ssim
+            totals["ms_ssim"] += m_ms_ssim
+            totals["sam"] += m_sam
+            totals["ergas"] += m_ergas
+            totals["cc"] += m_cc
+            totals["uiqi"] += m_uiqi
+            totals["rase"] += m_rase
+            
             steps += 1
     
     # 评估结束，恢复训练权重
@@ -315,28 +347,31 @@ def evaluate(
     
     # DDP 模式下聚合所有 GPU 的评估结果
     if ddp:
-        # 将统计量打包为张量: [loss, diff, recon, grad, steps]
-        metrics_tensor = torch.tensor([
-            totals["loss"],
-            totals["diff"],
-            totals["recon"],
-            totals["grad"],
-            float(steps),
-        ], device=device)
+        # 将统计量打包为张量
+        # keys: loss, diff, recon, grad, mae, mse, rmse, nrmse, psnr, ssim, ms_ssim, sam, ergas, cc, uiqi, rase
+        vals = [
+            totals["loss"], totals["diff"], totals["recon"], totals["grad"],
+            totals["mae"], totals["mse"], totals["rmse"], totals["nrmse"],
+            totals["psnr"], totals["ssim"], totals["ms_ssim"], totals["sam"],
+            totals["ergas"], totals["cc"], totals["uiqi"], totals["rase"],
+            float(steps)
+        ]
+        metrics_tensor = torch.tensor(vals, device=device)
         
         # 全局求和
         dist.all_reduce(metrics_tensor, op=dist.ReduceOp.SUM)
         
-        total_steps = metrics_tensor[4].item()
+        total_steps = metrics_tensor[-1].item()
         if total_steps == 0:
              return {k: float("nan") for k in totals}
              
-        return {
-            "loss": metrics_tensor[0].item() / total_steps,
-            "diff": metrics_tensor[1].item() / total_steps,
-            "recon": metrics_tensor[2].item() / total_steps,
-            "grad": metrics_tensor[3].item() / total_steps,
-        }
+        res = {}
+        keys = list(totals.keys()) # keys are in insertion order (Py3.7+)
+        # totals insertion order: loss, diff, recon, grad, mae... rase
+        # The first 16 elements of metrics_tensor correspond to these keys
+        for i, k in enumerate(keys):
+            res[k] = metrics_tensor[i].item() / total_steps
+        return res
 
     if steps == 0:
         return {k: float("nan") for k in totals}
@@ -447,30 +482,25 @@ def save_vis_samples(
     ema: EMA | None = None,
     use_ema: bool = False,
 ) -> None:
-    """生成并保存训练过程中的可视化样本 (Input/Pred/GT 对比图)。"""
+    # Import metrics inside function to avoid circular import issues if any
+    from sarcloud.utils.metrics import psnr, ssim, mae
+
+    """生成并保存训练过程中的可视化样本 (Input/Preds/GT 对比图)。支持多步数。"""
     backup = None
     try:
         if plt is None:
-            log_message(
-                "matplotlib 不可用，跳过可视化",
-                logger,
-                console=True,
-                use_tqdm=use_tqdm,
-            )
             return
         if len(dataset) == 0:
-            log_message(
-                "没有评估样本，跳过可视化",
-                logger,
-                console=True,
-                use_tqdm=use_tqdm,
-            )
             return
 
         # 读取可视化配置
         vis_cfg = cfg.get("vis", {})
         num_samples = int(vis_cfg.get("num_samples", 10))
         rgb_indices = vis_cfg.get("rgb_indices", [0, 1, 2])
+        vis_steps = vis_cfg.get("steps", [50])
+        if isinstance(vis_steps, int):
+            vis_steps = [vis_steps]
+            
         auto_scale = bool(vis_cfg.get("auto_scale", True))
         scale_percentiles = vis_cfg.get("scale_percentiles", [1.0, 99.0])
         auto_scale_ref = str(vis_cfg.get("auto_scale_ref", "clear")).lower()
@@ -478,10 +508,8 @@ def save_vis_samples(
         if not isinstance(scale_percentiles, (list, tuple)) or len(scale_percentiles) != 2:
             scale_percentiles = [1.0, 99.0]
         scale_percentiles = (float(scale_percentiles[0]), float(scale_percentiles[1]))
-        if auto_scale_ref not in {"clear", "cloudy", "pred", "self"}:
-            auto_scale_ref = "clear"
-
-        # 随机抽取样本 (使用固定种子+epoch偏移，保证每次抽样既随机又可控)
+        
+        # 随机抽取样本
         rng = random.Random(base_seed + epoch)
         sample_count = min(num_samples, len(dataset))
         indices = rng.sample(range(len(dataset)), k=sample_count)
@@ -497,59 +525,52 @@ def save_vis_samples(
             backup = apply_ema_weights(model, ema)
 
         sampling_cfg = cfg.get("sampling", {})
-        steps = int(sampling_cfg.get("steps", 50))
         init_method = sampling_cfg.get("init_method", "noise")
         noise_ratio = float(sampling_cfg.get("noise_ratio", 1.0))
+        
+        # 多步数采样循环
+        preds_map = {}
         with torch.inference_mode():
-            pred = sample_batch(
-                model, diffusion, y, s1,
-                steps=steps,
-                schedule_cfg=sampling_cfg,
-                init_method=init_method,
-                noise_ratio=noise_ratio,
-            )
+            for step_cnt in vis_steps:
+                if use_tqdm:
+                    # Avoid spamming log, just concise
+                    pass
+                pred = sample_batch(
+                    model, diffusion, y, s1,
+                    steps=step_cnt,
+                    schedule_cfg=sampling_cfg,
+                    init_method=init_method,
+                    noise_ratio=noise_ratio,
+                )
+                pred_cpu = pred.cpu()
+                preds_map[step_cnt] = pred_cpu.numpy()
+                
+                # 计算真实复原指标 (针对这 8 张图的平均)
+                x0_cpu = x0.cpu()
+                pred_clipped = torch.clamp(pred_cpu, 0.0, 1.0)
+                
+                val_psnr = psnr(pred_clipped, x0_cpu)
+                val_ssim = ssim(pred_clipped, x0_cpu)
+                val_mae = mae(pred_clipped, x0_cpu)
+                
+                log_message(
+                    f"[Vis] Step {step_cnt}: PSNR {val_psnr:.2f} SSIM {val_ssim:.4f} MAE {val_mae:.4f}",
+                    logger, console=True, use_tqdm=use_tqdm
+                )
 
         y_np = y.cpu().numpy()
         x0_np = x0.cpu().numpy()
-        pred_np = pred.cpu().numpy()
         
-        # 记录数值统计信息
-        log_message(summarize_array("vis cloudy", y_np), logger, console=True, use_tqdm=use_tqdm)
-        log_message(summarize_array("vis pred", pred_np), logger, console=True, use_tqdm=use_tqdm)
-        log_message(summarize_array("vis clear", x0_np), logger, console=True, use_tqdm=use_tqdm)
-
-        if auto_scale:
-            log_message(
-                f"vis auto_scale enabled (ref={auto_scale_ref}, per_channel={per_channel})",
-                logger,
-                console=True,
-                use_tqdm=use_tqdm,
-            )
-            
-        # 检测预测值是否严重越界 [0, 1]
-        pred_out_ratio = float(((pred_np < 0.0) | (pred_np > 1.0)).mean() * 100.0)
-        pred_self_scale_thresh = float(vis_cfg.get("pred_self_scale_threshold", 5.0))
-        pred_use_self_scale = auto_scale and auto_scale_ref != "self" and pred_out_ratio > pred_self_scale_thresh
-        
-        if pred_use_self_scale:
-            log_message(
-                f"vis pred out-of-range {pred_out_ratio:.2f}% -> use self scale for pred",
-                logger,
-                console=True,
-                use_tqdm=use_tqdm,
-            )
-
-        # 绘图
-        cols = 3
+        # 绘图: Cloudy + [Pred_s1, Pred_s2...] + Clear
+        cols = 2 + len(vis_steps)
         fig, axes = plt.subplots(sample_count, cols, figsize=(cols * 3, sample_count * 3), squeeze=False)
+        
         for row, idx in enumerate(indices):
+            # Scale params calculation
             scale_params = None
-            # 如果配置为统一缩放 (非 self)，则计算参考图像的亮度范围
             if auto_scale and auto_scale_ref != "self":
                 if auto_scale_ref == "cloudy":
                     ref_rgb = to_rgb(y_np[row], rgb_indices)
-                elif auto_scale_ref == "pred":
-                    ref_rgb = to_rgb(pred_np[row], rgb_indices)
                 else:
                     ref_rgb = to_rgb(x0_np[row], rgb_indices)
                 
@@ -561,52 +582,57 @@ def save_vis_samples(
                     lo, hi = np.percentile(ref_rgb, [scale_percentiles[0], scale_percentiles[1]])
                     scale_params = (np.array([lo, lo, lo]), np.array([hi, hi, hi]))
 
-            # 转换各个图像为 RGB
+            # Cloudy
             cloudy_rgb = to_rgb(
-                y_np[row],
-                rgb_indices,
-                auto_scale=auto_scale and auto_scale_ref == "self",
-                scale_params=scale_params,
-                per_channel=per_channel,
+                y_np[row], rgb_indices, 
+                auto_scale=auto_scale and auto_scale_ref=="self", 
+                scale_params=scale_params, per_channel=per_channel
             )
-            # 预测图如果越界严重，强制使用 self-scale，否则使用统一 scale
-            pred_rgb = to_rgb(
-                pred_np[row],
-                rgb_indices,
-                auto_scale=auto_scale and (auto_scale_ref == "self" or pred_use_self_scale),
-                scale_params=None if pred_use_self_scale else scale_params,
-                per_channel=per_channel,
-            )
-            clear_rgb = to_rgb(
-                x0_np[row],
-                rgb_indices,
-                auto_scale=auto_scale and auto_scale_ref == "self",
-                scale_params=scale_params,
-                per_channel=per_channel,
-            )
-
-            label = f"idx {idx}"
-
             axes[row, 0].imshow(cloudy_rgb)
-            axes[row, 1].imshow(pred_rgb)
-            axes[row, 2].imshow(clear_rgb)
-            axes[row, 0].set_title(f"Cloudy ({label})", fontsize=8)
-            axes[row, 1].set_title("Pred", fontsize=8)
-            axes[row, 2].set_title("Clear", fontsize=8)
-            for col in range(cols):
-                axes[row, col].axis("off")
+            axes[row, 0].set_title(f"Cloudy ({idx})", fontsize=8)
+            axes[row, 0].axis("off")
+            
+            # Preds
+            for i, step_cnt in enumerate(vis_steps):
+                pred_np = preds_map[step_cnt][row]
+                
+                # Check out of range logic
+                pred_out_ratio = float(((pred_np < 0.0) | (pred_np > 1.0)).mean() * 100.0)
+                pred_use_self = auto_scale and (auto_scale_ref == "self" or pred_out_ratio > 5.0)
+                
+                pred_rgb = to_rgb(
+                    pred_np, rgb_indices,
+                    auto_scale=pred_use_self,
+                    scale_params=None if pred_use_self else scale_params,
+                    per_channel=per_channel
+                )
+                axes[row, i + 1].imshow(pred_rgb)
+                axes[row, i + 1].set_title(f"Step {step_cnt}", fontsize=8)
+                axes[row, i + 1].axis("off")
+                
+            # Clear
+            clear_rgb = to_rgb(
+                x0_np[row], rgb_indices,
+                auto_scale=auto_scale and auto_scale_ref=="self",
+                scale_params=scale_params, per_channel=per_channel
+            )
+            axes[row, -1].imshow(clear_rgb)
+            axes[row, -1].set_title("Clear", fontsize=8)
+            axes[row, -1].axis("off")
 
         plt.tight_layout()
         vis_dir = out_dir / "vis"
         vis_dir.mkdir(parents=True, exist_ok=True)
         epoch_path = vis_dir / f"diffusion_vis_epoch_{epoch+1:03d}.png"
         fig.savefig(epoch_path, dpi=150)
-        latest_path = vis_dir / "diffusion_vis.png"
-        fig.savefig(latest_path, dpi=150)
+        # Also save latest
+        fig.savefig(vis_dir / "diffusion_vis.png", dpi=150)
         plt.close(fig)
         log_message(f"Saved diffusion visualization to {epoch_path}", logger, console=True, use_tqdm=use_tqdm)
     except Exception as exc:  # pragma: no cover
         log_message(f"Diffusion visualization failed: {exc}", logger, console=True, use_tqdm=use_tqdm)
+        import traceback
+        traceback.print_exc()
     finally:
         if backup is not None:
             restore_weights(model, backup)
@@ -615,6 +641,7 @@ def save_vis_samples(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default="configs/diffusion.yaml")
+    parser.add_argument("--resume", type=str, default=None, help="Path to checkpoint to resume from")
     args = parser.parse_args()
 
     # 1. 初始化
@@ -686,7 +713,7 @@ def main() -> None:
         model = DDP(
             model,
             device_ids=device_ids,
-            find_unused_parameters=True,
+            find_unused_parameters=False,
             gradient_as_bucket_view=True,  # 额外内存优化
         )
 
@@ -742,6 +769,46 @@ def main() -> None:
     ema_model = model.module if ddp else model
     ema = EMA(ema_model, decay=cfg["train"].get("ema_decay", 0.999))
 
+    # --- Resume Logic ---
+    start_epoch = 0
+    if args.resume:
+        ckpt_path = Path(args.resume)
+        if not ckpt_path.exists():
+            raise FileNotFoundError(f"Resume checkpoint not found: {ckpt_path}")
+        
+        map_location = {"cuda:%d" % 0: "cuda:%d" % local_rank} if ddp else device
+        checkpoint = torch.load(ckpt_path, map_location=map_location, weights_only=False)
+        
+        # Load model weights
+        if "model_state" in checkpoint:
+            # Handle DDP state dict (strip 'module.' prefix if needed, or handle by model wrapper)
+            # Since we wrapped model in DDP, loading state dict with 'module.' prefix is fine if DDP.
+            # If checkpoint was saved as model.module.state_dict() (which it is in line 952), then it has no 'module.' prefix usually?
+            # Line 952: model_state = model.module.state_dict() if ddp else model.state_dict()
+            # So saved state dict does NOT have 'module.' prefix.
+            # But currently `model` IS a DDP wrapper (if ddp=True).
+            # So we should load into model.module.
+            load_target = model.module if ddp else model
+            missing, unexpected = load_target.load_state_dict(checkpoint["model_state"], strict=False)
+            if is_main:
+                if missing:
+                    print(f"WARNING: Resume checkpoint missing keys: {missing}")
+                if unexpected:
+                    print(f"WARNING: Resume checkpoint unexpected keys: {unexpected}")
+                print(f"Loaded model weights from {ckpt_path} (strict=False)")
+        
+        # Load EMA
+        if "ema_state" in checkpoint:
+            ema.shadow = checkpoint["ema_state"]
+            if is_main:
+                print(f"Loaded EMA state from {ckpt_path}")
+                
+        # Load epoch
+        if "epoch" in checkpoint:
+            start_epoch = checkpoint["epoch"] + 1
+            if is_main:
+                print(f"Resuming from epoch {start_epoch}")
+
     # 8. 日志目录设置
     output_cfg = cfg.get("output", {})
     out_dir = Path(output_cfg["dir"])
@@ -790,7 +857,7 @@ def main() -> None:
 
     # 9. 训练主循环
     best_loss = math.inf
-    for epoch in range(cfg["train"]["num_epochs"]):
+    for epoch in range(start_epoch, cfg["train"]["num_epochs"]):
         model.train()
         if ddp and sampler is not None:
             sampler.set_epoch(epoch) # 这一步至关重要，否则每个 Epoch 数据顺序一样
@@ -925,7 +992,13 @@ def main() -> None:
                     "Epoch "
                     f"{epoch+1}/{cfg['train']['num_epochs']} - "
                     f"test_loss {eval_metrics['loss']:.4f} diff {eval_metrics['diff']:.4f} "
-                    f"recon {eval_metrics['recon']:.4f} grad {eval_metrics['grad']:.4f}",
+                    f"recon {eval_metrics['recon']:.4f} grad {eval_metrics['grad']:.4f}\n"
+                    f"  MAE {eval_metrics.get('mae', 0):.4f} MSE {eval_metrics.get('mse', 0):.4f} "
+                    f"RMSE {eval_metrics.get('rmse', 0):.4f} PSNR {eval_metrics.get('psnr', 0):.2f}\n"
+                    f"  SSIM {eval_metrics.get('ssim', 0):.4f} MS-SSIM {eval_metrics.get('ms_ssim', 0):.4f} "
+                    f"SAM {eval_metrics.get('sam', 0):.2f} ERGAS {eval_metrics.get('ergas', 0):.2f}\n"
+                    f"  CC {eval_metrics.get('cc', 0):.4f} UIQI {eval_metrics.get('uiqi', 0):.4f} "
+                    f"RASE {eval_metrics.get('rase', 0):.2f}",
                     logger, console=True, use_tqdm=True
                 )
             

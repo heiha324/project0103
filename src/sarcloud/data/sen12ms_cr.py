@@ -278,36 +278,88 @@ class Sen12MSCRRawDataset(Dataset):
         return s1_path, s2_path
 
     def _load_split_csv(self) -> List[Path]:
-        """从 CSV 文件加载指定划分 (train/test) 的文件列表。"""
+        """从 CSV 文件加载指定划分 (train/val/test) 的文件列表。
+        
+        支持两种 CSV 格式:
+        1. 有表头格式: split,cloudy_path,... (旧格式)
+        2. 无表头格式: split_id,s1,s2_cloudFree,s2_cloudy,filename (SEN12MS-CR 官方补充格式)
+           - split_id: 1=train, 2=val, 3=test
+           - filename: ROIs{scene}_{season}_{tile}_p{patch}.tif
+        """
         if self.split_csv is None:
             return []
         if not self.split_csv.exists():
             raise RuntimeError(f"未找到 Split CSV: {self.split_csv}")
+        
+        # 将 split 名称映射到数字 ID
+        split_id_map = {"train": "1", "val": "2", "test": "3"}
+        target_split_id = split_id_map.get(self.split, self.split) if self.split else None
             
         cloudy_paths: List[Path] = []
         with self.split_csv.open("r", encoding="utf-8", newline="") as f:
-            reader = csv.DictReader(f)
-            if reader.fieldnames is None:
-                raise RuntimeError(f"CSV 缺失表头: {self.split_csv}")
-            for row in reader:
-                # 过滤划分
-                if self.split and row.get("split") != self.split:
-                    continue
-                
-                # 尝试获取路径列
-                path_str = (
-                    row.get("cloudy_path")
-                    or row.get("cloudy_relpath")
-                    or row.get("s2_cloudy_path")
-                    or ""
-                )
-                if not path_str:
-                    continue
+            # 先读取第一行判断是否有表头
+            first_line = f.readline().strip()
+            f.seek(0)  # 重置文件指针
+            
+            # 检测是否为无表头的官方补充格式 (第一列是数字 1/2/3)
+            first_col = first_line.split(",")[0].strip()
+            is_supplementary_format = first_col in ("1", "2", "3")
+            
+            if is_supplementary_format:
+                # 无表头格式: split_id,s1,s2_cloudFree,s2_cloudy,filename
+                reader = csv.reader(f)
+                for row in reader:
+                    if len(row) < 5:
+                        continue
+                    row_split_id = row[0].strip()
+                    filename = row[4].strip()
                     
-                candidate = Path(path_str)
-                if not candidate.is_absolute():
-                    candidate = self.root / candidate
-                cloudy_paths.append(candidate)
+                    # 过滤划分
+                    if target_split_id and row_split_id != target_split_id:
+                        continue
+                    
+                    # 从文件名解析路径
+                    # 文件名格式: ROIs{scene}_{season}_{tile}_p{patch}.tif
+                    # 例如: ROIs1158_spring_101_p675.tif
+                    # 对应目录: ROIs1158_spring_s2_cloudy/s2_cloudy_101/ROIs1158_spring_s2_cloudy_101_p675.tif
+                    parts = filename.replace(".tif", "").split("_")
+                    if len(parts) >= 4:
+                        # 解析: ROIs1158, spring, 101, p675
+                        scene = parts[0]       # ROIs1158
+                        season = parts[1]      # spring
+                        tile = parts[2]        # 101
+                        patch = parts[3]       # p675
+                        
+                        # 构建完整路径
+                        roi_dir = f"{scene}_{season}_s2_cloudy"
+                        subdir = f"s2_cloudy_{tile}"
+                        full_filename = f"{scene}_{season}_s2_cloudy_{tile}_{patch}.tif"
+                        cloudy_path = self.root / roi_dir / subdir / full_filename
+                        cloudy_paths.append(cloudy_path)
+            else:
+                # 有表头格式 (旧格式)
+                reader = csv.DictReader(f)
+                if reader.fieldnames is None:
+                    raise RuntimeError(f"CSV 缺失表头: {self.split_csv}")
+                for row in reader:
+                    # 过滤划分
+                    if self.split and row.get("split") != self.split:
+                        continue
+                    
+                    # 尝试获取路径列
+                    path_str = (
+                        row.get("cloudy_path")
+                        or row.get("cloudy_relpath")
+                        or row.get("s2_cloudy_path")
+                        or ""
+                    )
+                    if not path_str:
+                        continue
+                        
+                    candidate = Path(path_str)
+                    if not candidate.is_absolute():
+                        candidate = self.root / candidate
+                    cloudy_paths.append(candidate)
                 
         if not cloudy_paths:
             raise RuntimeError(f"在 CSV {self.split_csv} 中未找到 split='{self.split}' 的样本")

@@ -300,6 +300,12 @@ def select_indices(
     return selected
 
 
+def parse_int_list(text: str) -> list[int]:
+    if not text:
+        return []
+    return [int(x.strip()) for x in text.split(",") if x.strip()]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default="configs/diffusion.yaml")
@@ -318,12 +324,17 @@ def main() -> None:
     parser.add_argument("--rgb", type=str, default="0,1,2")
     parser.add_argument("--show-alpha", action="store_true")
     parser.add_argument("--use-matplotlib", action="store_true")
-    parser.add_argument("--steps", type=int, default=None)
+    parser.add_argument("--steps", type=str, default=None, help="Comma-separated steps, e.g. '50,100,500'")
     parser.add_argument("--output", type=str, default="eval/diffusion_vis.png")
     args = parser.parse_args()
 
     _ensure_torch_importable()
     _import_deps()
+    
+    # Import metrics
+    from sarcloud.utils.metrics import (
+        mae, mse, rmse, nrmse, psnr, ssim, ms_ssim, sam, ergas, cc, uiqi, rase
+    )
 
     cfg = load_config(args.config)
     data_cfg = cfg["sen12ms"]
@@ -331,14 +342,25 @@ def main() -> None:
         data_cfg = cfg.get("test") or cfg.get("val") or data_cfg
     dataset = build_dataset(data_cfg)
 
+    # Parse steps
+    sampling_cfg = cfg.get("sampling", {})
+    default_steps = sampling_cfg.get("steps", 50)
+    if args.steps:
+        steps_list = parse_int_list(args.steps)
+    else:
+        steps_list = [default_steps]
+
     sample_dir = Path(args.samples)
     sample_map = list_samples(sample_dir) if sample_dir.exists() else {}
-    use_samples = bool(sample_map) and args.checkpoint is None and args.run_dir is None
+    
+    # Check if we can use existing samples
+    # We can only use existing samples if steps is not specified (or matches default) AND checkpoint is not specified
+    use_samples = bool(sample_map) and args.checkpoint is None and args.run_dir is None and args.steps is None
 
     model = None
     diffusion = None
-    sampling_cfg = cfg.get("sampling", {})
     device = None
+    
     if not use_samples:
         try:
             checkpoint_path = resolve_checkpoint(cfg, args.checkpoint, args.run_dir, args.ckpt)
@@ -364,6 +386,8 @@ def main() -> None:
             beta_start=cfg["schedule"].get("beta_start", 1e-4),
             beta_end=cfg["schedule"].get("beta_end", 2e-2),
             device=device,
+            x0_clip_min=cfg["schedule"].get("x0_clip_min", 0.0),
+            x0_clip_max=cfg["schedule"].get("x0_clip_max", 1.0),
         )
 
     rgb_indices = parse_indices(args.rgb)
@@ -376,26 +400,84 @@ def main() -> None:
     rows: list[list[np.ndarray]] = []
     row_labels: list[str] = []
 
+    # Metrics storage: {step: {metric: [val, val, ...]}}
+    metrics_stats = {s: {} for s in steps_list}
+    metric_names = [
+        "MAE", "MSE", "RMSE", "nRMSE", "PSNR", "SSIM", "MS-SSIM", 
+        "SAM", "ERGAS", "CC", "UIQI", "RASE"
+    ]
+    for s in steps_list:
+        for m in metric_names:
+            metrics_stats[s][m] = []
+
     for row, idx in enumerate(indices):
         s1, s2_cloudy, s2_clear, alpha = dataset[idx]
+        
+        # Prepare targets for metrics (ensure tensor on device if needed, or CPU)
+        # Metrics are computed on CPU to save GPU memory and avoid synchronization issues in loop
+        target_t = s2_clear.float() # (C, H, W)
+        
+        preds_rgb = []
+        
         if use_samples:
-            pred = np.load(sample_map[idx]).astype(np.float32)
+            # Single prediction from file
+            # Assuming the file corresponds to the single step in steps_list[0]
+            # Since use_samples is True only if steps is None (default 50), steps_list has 1 element.
+            pred_np = np.load(sample_map[idx]).astype(np.float32)
+            preds_rgb.append(to_rgb(pred_np, rgb_indices))
+            
+            # Compute metrics
+            pred_t = torch.from_numpy(pred_np)
+            current_step = steps_list[0]
+            
+            # Compute all metrics
+            metrics_stats[current_step]["MAE"].append(mae(pred_t, target_t))
+            metrics_stats[current_step]["MSE"].append(mse(pred_t, target_t))
+            metrics_stats[current_step]["RMSE"].append(rmse(pred_t, target_t))
+            metrics_stats[current_step]["nRMSE"].append(nrmse(pred_t, target_t))
+            metrics_stats[current_step]["PSNR"].append(psnr(pred_t, target_t))
+            metrics_stats[current_step]["SSIM"].append(ssim(pred_t, target_t))
+            metrics_stats[current_step]["MS-SSIM"].append(ms_ssim(pred_t, target_t))
+            metrics_stats[current_step]["SAM"].append(sam(pred_t, target_t))
+            metrics_stats[current_step]["ERGAS"].append(ergas(pred_t, target_t))
+            metrics_stats[current_step]["CC"].append(cc(pred_t, target_t))
+            metrics_stats[current_step]["UIQI"].append(uiqi(pred_t, target_t))
+            metrics_stats[current_step]["RASE"].append(rase(pred_t, target_t))
+
         else:
+            # Online inference for each step count
             s1_t = s1.unsqueeze(0).to(device)
             y_t = s2_cloudy.unsqueeze(0).to(device)
-            with torch.inference_mode():
-                pred_t = sample_batch(
-                    model,
-                    diffusion,
-                    y_t,
-                    s1_t,
-                    steps=args.steps if args.steps is not None else sampling_cfg.get("steps", 50),
-                    schedule_cfg=sampling_cfg,
-                )
-            pred = pred_t.squeeze(0).cpu().numpy().astype(np.float32)
+            
+            for step_cnt in steps_list:
+                with torch.inference_mode():
+                    pred_t_gpu = sample_batch(
+                        model,
+                        diffusion,
+                        y_t,
+                        s1_t,
+                        steps=step_cnt,
+                        schedule_cfg=sampling_cfg,
+                    )
+                # Move to CPU for metrics and visualization
+                pred_t = pred_t_gpu.squeeze(0).cpu() # (C, H, W)
+                preds_rgb.append(to_rgb(pred_t.numpy(), rgb_indices))
+                
+                # Compute all metrics
+                metrics_stats[step_cnt]["MAE"].append(mae(pred_t, target_t))
+                metrics_stats[step_cnt]["MSE"].append(mse(pred_t, target_t))
+                metrics_stats[step_cnt]["RMSE"].append(rmse(pred_t, target_t))
+                metrics_stats[step_cnt]["nRMSE"].append(nrmse(pred_t, target_t))
+                metrics_stats[step_cnt]["PSNR"].append(psnr(pred_t, target_t))
+                metrics_stats[step_cnt]["SSIM"].append(ssim(pred_t, target_t))
+                metrics_stats[step_cnt]["MS-SSIM"].append(ms_ssim(pred_t, target_t))
+                metrics_stats[step_cnt]["SAM"].append(sam(pred_t, target_t))
+                metrics_stats[step_cnt]["ERGAS"].append(ergas(pred_t, target_t))
+                metrics_stats[step_cnt]["CC"].append(cc(pred_t, target_t))
+                metrics_stats[step_cnt]["UIQI"].append(uiqi(pred_t, target_t))
+                metrics_stats[step_cnt]["RASE"].append(rase(pred_t, target_t))
 
         cloudy_rgb = to_rgb(s2_cloudy.numpy(), rgb_indices)
-        pred_rgb = to_rgb(pred, rgb_indices)
         clear_rgb = to_rgb(s2_clear.numpy(), rgb_indices)
 
         cloud_ratio = None
@@ -408,11 +490,32 @@ def main() -> None:
             label = f"{label} cloud {cloud_ratio * 100:.1f}%"
         row_labels.append(label)
 
-        row_imgs: list[np.ndarray] = [cloudy_rgb, pred_rgb, clear_rgb]
+        # Order: [Cloudy, Pred_1, Pred_2..., Clear, (Alpha)]
+        row_imgs: list[np.ndarray] = [cloudy_rgb] + preds_rgb + [clear_rgb]
+        
         if args.show_alpha:
             alpha_vis = alpha.squeeze(0).numpy() if alpha is not None else np.zeros_like(s2_clear[0].numpy())
             row_imgs.append(alpha_vis)
         rows.append(row_imgs)
+
+    # Print Metrics Summary
+    print("\n" + "="*60)
+    print(f"METRICS SUMMARY (Average over {len(indices)} samples)")
+    print("="*60)
+    
+    for s in steps_list:
+        print(f"Step {s}:")
+        stats = metrics_stats[s]
+        for m_name in metric_names:
+            vals = stats[m_name]
+            if not vals:
+                print(f"  {m_name:<8}: N/A")
+                continue
+            avg = np.mean(vals)
+            std = np.std(vals)
+            print(f"  {m_name:<8}: {avg:.4f} ± {std:.4f}")
+        print("-" * 40)
+    print("="*60 + "\n")
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -429,6 +532,18 @@ def main() -> None:
         cols = len(rows[0])
         n = len(rows)
         fig, axes = plt.subplots(n, cols, figsize=(cols * 3, n * 3), squeeze=False)
+        
+        # Determine column titles
+        titles = ["Cloudy"]
+        if use_samples:
+            titles.append("Pred")
+        else:
+            for s in steps_list:
+                titles.append(f"Step {s}")
+        titles.append("Clear")
+        if args.show_alpha:
+            titles.append("Alpha")
+            
         for row_idx, (label, row_imgs) in enumerate(zip(row_labels, rows)):
             for col_idx, img in enumerate(row_imgs):
                 if img.ndim == 2:
@@ -436,11 +551,15 @@ def main() -> None:
                 else:
                     axes[row_idx, col_idx].imshow(img)
                 axes[row_idx, col_idx].axis("off")
-            axes[row_idx, 0].set_title(f"Cloudy ({label})", fontsize=8)
-            axes[row_idx, 1].set_title("Pred", fontsize=8)
-            axes[row_idx, 2].set_title("Clear", fontsize=8)
-            if args.show_alpha and cols >= 4:
-                axes[row_idx, 3].set_title("Alpha", fontsize=8)
+                
+                # Set titles only on first row
+                if row_idx == 0 and col_idx < len(titles):
+                    axes[row_idx, col_idx].set_title(titles[col_idx], fontsize=10)
+            
+            # Add row label to the left of the first image
+            axes[row_idx, 0].text(-0.1, 0.5, label, transform=axes[row_idx, 0].transAxes, 
+                                  va='center', ha='right', fontsize=8, rotation=90)
+                                  
         plt.tight_layout()
         fig.savefig(output_path, dpi=150)
         plt.close(fig)

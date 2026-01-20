@@ -1,0 +1,197 @@
+W0119 15:40:45.010000 1195715 torch/distributed/run.py:793] 
+W0119 15:40:45.010000 1195715 torch/distributed/run.py:793] *****************************************
+W0119 15:40:45.010000 1195715 torch/distributed/run.py:793] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0119 15:40:45.010000 1195715 torch/distributed/run.py:793] *****************************************
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/home/ps/KXShen/syncfolder/project0103/scripts/train_diffusion.py", line 45, in <module>
+    import matplotlib
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/__init__.py", line 161, in <module>
+    from . import _api, _version, cbook, _docstring, rcsetup
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/rcsetup.py", line 27, in <module>
+    from matplotlib.colors import Colormap, is_color_like
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/colors.py", line 57, in <module>
+    from matplotlib import _api, _cm, cbook, scale
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/scale.py", line 22, in <module>
+    from matplotlib.ticker import (
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/ticker.py", line 143, in <module>
+    from matplotlib import transforms as mtransforms
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/transforms.py", line 49, in <module>
+    from matplotlib._path import (
+Traceback (most recent call last):
+  File "/home/ps/.local/lib/python3.12/site-packages/numpy/core/_multiarray_umath.py", line 44, in __getattr__
+    raise ImportError(msg)
+ImportError: 
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/home/ps/KXShen/syncfolder/project0103/scripts/train_diffusion.py", line 45, in <module>
+    import matplotlib
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/__init__.py", line 161, in <module>
+    from . import _api, _version, cbook, _docstring, rcsetup
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/rcsetup.py", line 27, in <module>
+    from matplotlib.colors import Colormap, is_color_like
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/colors.py", line 57, in <module>
+    from matplotlib import _api, _cm, cbook, scale
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/scale.py", line 22, in <module>
+    from matplotlib.ticker import (
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/ticker.py", line 143, in <module>
+    from matplotlib import transforms as mtransforms
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/transforms.py", line 49, in <module>
+    from matplotlib._path import (
+Traceback (most recent call last):
+  File "/home/ps/.local/lib/python3.12/site-packages/numpy/core/_multiarray_umath.py", line 44, in __getattr__
+    raise ImportError(msg)
+ImportError: 
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/home/ps/KXShen/syncfolder/project0103/scripts/train_diffusion.py", line 45, in <module>
+    import matplotlib
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/__init__.py", line 161, in <module>
+    from . import _api, _version, cbook, _docstring, rcsetup
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/rcsetup.py", line 27, in <module>
+    from matplotlib.colors import Colormap, is_color_like
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/colors.py", line 57, in <module>
+    from matplotlib import _api, _cm, cbook, scale
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/scale.py", line 22, in <module>
+    from matplotlib.ticker import (
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/ticker.py", line 143, in <module>
+    from matplotlib import transforms as mtransforms
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/transforms.py", line 49, in <module>
+    from matplotlib._path import (
+Traceback (most recent call last):
+  File "/home/ps/.local/lib/python3.12/site-packages/numpy/core/_multiarray_umath.py", line 44, in __getattr__
+    raise ImportError(msg)
+ImportError: 
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/home/ps/KXShen/syncfolder/project0103/scripts/train_diffusion.py", line 45, in <module>
+    import matplotlib
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/__init__.py", line 161, in <module>
+    from . import _api, _version, cbook, _docstring, rcsetup
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/rcsetup.py", line 27, in <module>
+    from matplotlib.colors import Colormap, is_color_like
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/colors.py", line 57, in <module>
+    from matplotlib import _api, _cm, cbook, scale
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/scale.py", line 22, in <module>
+    from matplotlib.ticker import (
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/ticker.py", line 143, in <module>
+    from matplotlib import transforms as mtransforms
+  File "/usr/local/anaconda3/lib/python3.12/site-packages/matplotlib/transforms.py", line 49, in <module>
+    from matplotlib._path import (
+Traceback (most recent call last):
+  File "/home/ps/.local/lib/python3.12/site-packages/numpy/core/_multiarray_umath.py", line 44, in __getattr__
+    raise ImportError(msg)
+ImportError: 
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+WARNING: Resume checkpoint missing keys: ['main_to_bot_proj.weight', 'main_to_bot_proj.bias']
+Loaded model weights from /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260118_200331/diffusion_last.pth (strict=False)
+Loaded EMA state from /home/data/KXShen/model/project0103/diffusion_sen12mscr_raw_20260118_200331/diffusion_last.pth
+Resuming from epoch 78
+Train 79/100:   0%|                                    | 0/2540 [00:00<?, ?it/s][rank0]:[W119 15:40:58.051591516 reducer.cpp:1400] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank1]:[W119 15:40:58.090229698 reducer.cpp:1400] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank3]:[W119 15:40:58.177676605 reducer.cpp:1400] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank2]:[W119 15:40:58.178509647 reducer.cpp:1400] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+Train 79/100:   0%|                       | 0/2540 [00:02<?, ?it/s, loss=0.0187]Train 79/100:   0%|             | 1/2540 [00:02<1:31:08,  2.15s/it, loss=0.0187]Train 79/100:   0%|             | 1/2540 [00:02<1:31:08,  2.15s/it, loss=0.0154]Train 79/100:   0%|               | 2/2540 [00:02<44:52,  1.06s/it, loss=0.0154]Train 79/100:   0%|               | 2/2540 [00:02<44:52,  1.06s/it, loss=0.0163]Train 79/100:   0%|               | 3/2540 [00:02<30:03,  1.41it/s, loss=0.0163]Train 79/100:   0%|               | 3/2540 [00:03<30:03,  1.41it/s, loss=0.0205]Train 79/100:   0%|               | 4/2540 [00:03<23:04,  1.83it/s, loss=0.0205]Train 79/100:   0%|               | 4/2540 [00:03<23:04,  1.83it/s, loss=0.0163]Train 79/100:   0%|               | 5/2540 [00:03<19:14,  2.20it/s, loss=0.0163]Train 79/100:   0%|               | 5/2540 [00:03<19:14,  2.20it/s, loss=0.0210]Train 79/100:   0%|               | 6/2540 [00:03<17:00,  2.48it/s, loss=0.0210]Train 79/100:   0%|               | 6/2540 [00:03<17:00,  2.48it/s, loss=0.0157]Train 79/100:   0%|               | 7/2540 [00:03<15:31,  2.72it/s, loss=0.0157]Train 79/100:   0%|               | 7/2540 [00:04<15:31,  2.72it/s, loss=0.0154]Train 79/100:   0%|               | 8/2540 [00:04<14:31,  2.91it/s, loss=0.0154]Train 79/100:   0%|               | 8/2540 [00:04<14:31,  2.91it/s, loss=0.0195]Train 79/100:   0%|               | 9/2540 [00:04<13:50,  3.05it/s, loss=0.0195]Train 79/100:   0%|               | 9/2540 [00:04<13:50,  3.05it/s, loss=0.0113]Train 79/100:   0%|              | 10/2540 [00:04<13:28,  3.13it/s, loss=0.0113]Train 79/100:   0%|              | 10/2540 [00:05<13:28,  3.13it/s, loss=0.0232]Train 79/100:   0%|              | 11/2540 [00:05<13:10,  3.20it/s, loss=0.0232]Train 79/100:   0%|              | 11/2540 [00:05<13:10,  3.20it/s, loss=0.0243]Train 79/100:   0%|              | 12/2540 [00:05<12:55,  3.26it/s, loss=0.0243]Train 79/100:   0%|              | 12/2540 [00:05<12:55,  3.26it/s, loss=0.0128]Train 79/100:   1%|              | 13/2540 [00:05<12:44,  3.31it/s, loss=0.0128]Train 79/100:   1%|              | 13/2540 [00:05<12:44,  3.31it/s, loss=0.0342]Train 79/100:   1%|              | 14/2540 [00:05<12:41,  3.32it/s, loss=0.0342]Train 79/100:   1%|              | 14/2540 [00:06<12:41,  3.32it/s, loss=0.0300]Train 79/100:   1%|              | 15/2540 [00:06<12:37,  3.33it/s, loss=0.0300]Train 79/100:   1%|              | 15/2540 [00:06<12:37,  3.33it/s, loss=0.0240]Train 79/100:   1%|              | 16/2540 [00:06<12:31,  3.36it/s, loss=0.0240]Train 79/100:   1%|              | 16/2540 [00:06<12:31,  3.36it/s, loss=0.0221]Train 79/100:   1%|              | 17/2540 [00:06<12:28,  3.37it/s, loss=0.0221]Train 79/100:   1%|              | 17/2540 [00:07<12:28,  3.37it/s, loss=0.0196]Train 79/100:   1%|              | 18/2540 [00:07<12:33,  3.35it/s, loss=0.0196]Train 79/100:   1%|              | 18/2540 [00:07<12:33,  3.35it/s, loss=0.0165]Train 79/100:   1%|              | 19/2540 [00:07<12:30,  3.36it/s, loss=0.0165]Train 79/100:   1%|              | 19/2540 [00:07<12:30,  3.36it/s, loss=0.0213]Train 79/100:   1%|              | 20/2540 [00:07<12:28,  3.37it/s, loss=0.0213]Train 79/100:   1%|              | 20/2540 [00:08<12:28,  3.37it/s, loss=0.0260]Train 79/100:   1%|              | 21/2540 [00:08<12:24,  3.38it/s, loss=0.0260]Train 79/100:   1%|              | 21/2540 [00:08<12:24,  3.38it/s, loss=0.0313]Train 79/100:   1%|              | 22/2540 [00:08<12:23,  3.39it/s, loss=0.0313]Train 79/100:   1%|              | 22/2540 [00:08<12:23,  3.39it/s, loss=0.0145]Train 79/100:   1%|▏             | 23/2540 [00:08<12:23,  3.38it/s, loss=0.0145]Train 79/100:   1%|▏             | 23/2540 [00:08<12:23,  3.38it/s, loss=0.0283]Train 79/100:   1%|▏             | 24/2540 [00:08<12:24,  3.38it/s, loss=0.0283]Train 79/100:   1%|▏             | 24/2540 [00:09<12:24,  3.38it/s, loss=0.0169]Train 79/100:   1%|▏             | 25/2540 [00:09<12:21,  3.39it/s, loss=0.0169]Train 79/100:   1%|▏             | 25/2540 [00:09<12:21,  3.39it/s, loss=0.0354]Train 79/100:   1%|▏             | 26/2540 [00:09<12:20,  3.39it/s, loss=0.0354]Train 79/100:   1%|▏             | 26/2540 [00:09<12:20,  3.39it/s, loss=0.0130]Train 79/100:   1%|▏             | 27/2540 [00:09<12:21,  3.39it/s, loss=0.0130]Train 79/100:   1%|▏             | 27/2540 [00:10<12:21,  3.39it/s, loss=0.0224]Train 79/100:   1%|▏             | 28/2540 [00:10<12:20,  3.39it/s, loss=0.0224]Train 79/100:   1%|▏             | 28/2540 [00:10<12:20,  3.39it/s, loss=0.0851]Train 79/100:   1%|▏             | 29/2540 [00:10<12:19,  3.39it/s, loss=0.0851]Train 79/100:   1%|▏             | 29/2540 [00:10<12:19,  3.39it/s, loss=0.0158]Train 79/100:   1%|▏             | 30/2540 [00:10<12:19,  3.39it/s, loss=0.0158]Train 79/100:   1%|▏             | 30/2540 [00:11<12:19,  3.39it/s, loss=0.0216]Train 79/100:   1%|▏             | 31/2540 [00:11<12:19,  3.39it/s, loss=0.0216]Train 79/100:   1%|▏             | 31/2540 [00:11<12:19,  3.39it/s, loss=0.0147]Train 79/100:   1%|▏             | 32/2540 [00:11<12:20,  3.39it/s, loss=0.0147]Train 79/100:   1%|▏             | 32/2540 [00:11<12:20,  3.39it/s, loss=0.0317]Train 79/100:   1%|▏             | 33/2540 [00:11<12:19,  3.39it/s, loss=0.0317]Train 79/100:   1%|▏             | 33/2540 [00:11<12:19,  3.39it/s, loss=0.0171]Train 79/100:   1%|▏             | 34/2540 [00:11<12:20,  3.39it/s, loss=0.0171]Train 79/100:   1%|▏             | 34/2540 [00:12<12:20,  3.39it/s, loss=0.0170]Train 79/100:   1%|▏             | 35/2540 [00:12<12:16,  3.40it/s, loss=0.0170]Train 79/100:   1%|▏             | 35/2540 [00:12<12:16,  3.40it/s, loss=0.0396]Train 79/100:   1%|▏             | 36/2540 [00:12<12:18,  3.39it/s, loss=0.0396]Train 79/100:   1%|▏             | 36/2540 [00:12<12:18,  3.39it/s, loss=0.0189]Train 79/100:   1%|▏             | 37/2540 [00:12<12:19,  3.38it/s, loss=0.0189]Train 79/100:   1%|▏             | 37/2540 [00:13<12:19,  3.38it/s, loss=0.0236]Train 79/100:   1%|▏             | 38/2540 [00:13<12:19,  3.38it/s, loss=0.0236]Train 79/100:   1%|▏             | 38/2540 [00:13<12:19,  3.38it/s, loss=0.0117]Train 79/100:   2%|▏             | 39/2540 [00:13<12:19,  3.38it/s, loss=0.0117]Train 79/100:   2%|▏             | 39/2540 [00:13<12:19,  3.38it/s, loss=0.0137]Train 79/100:   2%|▏             | 40/2540 [00:13<12:17,  3.39it/s, loss=0.0137]Train 79/100:   2%|▏             | 40/2540 [00:13<12:17,  3.39it/s, loss=0.0284]Train 79/100:   2%|▏             | 41/2540 [00:13<12:14,  3.40it/s, loss=0.0284]Train 79/100:   2%|▏             | 41/2540 [00:14<12:14,  3.40it/s, loss=0.0193]Train 79/100:   2%|▏             | 42/2540 [00:14<12:15,  3.40it/s, loss=0.0193]Train 79/100:   2%|▏             | 42/2540 [00:14<12:15,  3.40it/s, loss=0.0402]Train 79/100:   2%|▏             | 43/2540 [00:14<12:16,  3.39it/s, loss=0.0402]Train 79/100:   2%|▏             | 43/2540 [00:14<12:16,  3.39it/s, loss=0.0190]Train 79/100:   2%|▏             | 44/2540 [00:14<12:17,  3.38it/s, loss=0.0190]Train 79/100:   2%|▏             | 44/2540 [00:15<12:17,  3.38it/s, loss=0.0416]Train 79/100:   2%|▏             | 45/2540 [00:15<12:16,  3.39it/s, loss=0.0416]Train 79/100:   2%|▏             | 45/2540 [00:15<12:16,  3.39it/s, loss=0.0201]Train 79/100:   2%|▎             | 46/2540 [00:15<12:12,  3.40it/s, loss=0.0201]Train 79/100:   2%|▎             | 46/2540 [00:15<12:12,  3.40it/s, loss=0.0134]Train 79/100:   2%|▎             | 47/2540 [00:15<12:12,  3.40it/s, loss=0.0134]Train 79/100:   2%|▎             | 47/2540 [00:16<12:12,  3.40it/s, loss=0.0296]Train 79/100:   2%|▎             | 48/2540 [00:16<12:13,  3.40it/s, loss=0.0296]Train 79/100:   2%|▎             | 48/2540 [00:16<12:13,  3.40it/s, loss=0.0377]Train 79/100:   2%|▎             | 49/2540 [00:16<12:13,  3.40it/s, loss=0.0377]Train 79/100:   2%|▎             | 49/2540 [00:16<12:13,  3.40it/s, loss=0.0261]Train 79/100:   2%|▎             | 50/2540 [00:16<12:13,  3.39it/s, loss=0.0261]Train 79/100:   2%|▎             | 50/2540 [00:16<12:13,  3.39it/s, loss=0.0127]Train 79/100:   2%|▎             | 51/2540 [00:16<12:12,  3.40it/s, loss=0.0127]Train 79/100:   2%|▎             | 51/2540 [00:17<12:12,  3.40it/s, loss=0.0183]Train 79/100:   2%|▎             | 52/2540 [00:17<12:12,  3.39it/s, loss=0.0183]Train 79/100:   2%|▎             | 52/2540 [00:17<12:12,  3.39it/s, loss=0.0687]Train 79/100:   2%|▎             | 53/2540 [00:17<12:10,  3.41it/s, loss=0.0687]Train 79/100:   2%|▎             | 53/2540 [00:17<12:10,  3.41it/s, loss=0.0202]Train 79/100:   2%|▎             | 54/2540 [00:17<12:11,  3.40it/s, loss=0.0202]Train 79/100:   2%|▎             | 54/2540 [00:18<12:11,  3.40it/s, loss=0.0244]Train 79/100:   2%|▎             | 55/2540 [00:18<12:10,  3.40it/s, loss=0.0244]Train 79/100:   2%|▎             | 55/2540 [00:18<12:10,  3.40it/s, loss=0.0444]Train 79/100:   2%|▎             | 56/2540 [00:18<12:08,  3.41it/s, loss=0.0444]Train 79/100:   2%|▎             | 56/2540 [00:18<12:08,  3.41it/s, loss=0.0108]Train 79/100:   2%|▎             | 57/2540 [00:18<12:07,  3.41it/s, loss=0.0108]Train 79/100:   2%|▎             | 57/2540 [00:18<12:07,  3.41it/s, loss=0.0151]Train 79/100:   2%|▎             | 58/2540 [00:18<12:07,  3.41it/s, loss=0.0151]Train 79/100:   2%|▎             | 58/2540 [00:19<12:07,  3.41it/s, loss=0.0292]Train 79/100:   2%|▎             | 59/2540 [00:19<12:07,  3.41it/s, loss=0.0292]Train 79/100:   2%|▎             | 59/2540 [00:19<12:07,  3.41it/s, loss=0.0141]Train 79/100:   2%|▎             | 60/2540 [00:19<12:09,  3.40it/s, loss=0.0141]Train 79/100:   2%|▎             | 60/2540 [00:19<12:09,  3.40it/s, loss=0.0239]Train 79/100:   2%|▎             | 61/2540 [00:19<12:06,  3.41it/s, loss=0.0239]Train 79/100:   2%|▎             | 61/2540 [00:20<12:06,  3.41it/s, loss=0.0266]Train 79/100:   2%|▎             | 62/2540 [00:20<12:09,  3.40it/s, loss=0.0266]Train 79/100:   2%|▎             | 62/2540 [00:20<12:09,  3.40it/s, loss=0.0147]Train 79/100:   2%|▎             | 63/2540 [00:20<12:06,  3.41it/s, loss=0.0147]Train 79/100:   2%|▎             | 63/2540 [00:20<12:06,  3.41it/s, loss=0.0237]Train 79/100:   3%|▎             | 64/2540 [00:20<12:04,  3.42it/s, loss=0.0237]Train 79/100:   3%|▎             | 64/2540 [00:21<12:04,  3.42it/s, loss=0.0166]Train 79/100:   3%|▎             | 65/2540 [00:21<12:03,  3.42it/s, loss=0.0166]Train 79/100:   3%|▎             | 65/2540 [00:21<12:03,  3.42it/s, loss=0.0236]Train 79/100:   3%|▎             | 66/2540 [00:21<12:03,  3.42it/s, loss=0.0236]Train 79/100:   3%|▎             | 66/2540 [00:21<12:03,  3.42it/s, loss=0.0168]Train 79/100:   3%|▎             | 67/2540 [00:21<12:03,  3.42it/s, loss=0.0168]Train 79/100:   3%|▎             | 67/2540 [00:21<12:03,  3.42it/s, loss=0.0203]Train 79/100:   3%|▎             | 68/2540 [00:21<12:00,  3.43it/s, loss=0.0203]Train 79/100:   3%|▎             | 68/2540 [00:22<12:00,  3.43it/s, loss=0.0496]Train 79/100:   3%|▍             | 69/2540 [00:22<12:00,  3.43it/s, loss=0.0496]Train 79/100:   3%|▍             | 69/2540 [00:22<12:00,  3.43it/s, loss=0.0212]Train 79/100:   3%|▍             | 70/2540 [00:22<12:04,  3.41it/s, loss=0.0212]Train 79/100:   3%|▍             | 70/2540 [00:22<12:04,  3.41it/s, loss=0.0251]Train 79/100:   3%|▍             | 71/2540 [00:22<12:01,  3.42it/s, loss=0.0251]Train 79/100:   3%|▍             | 71/2540 [00:23<12:01,  3.42it/s, loss=0.0197]Train 79/100:   3%|▍             | 72/2540 [00:23<12:03,  3.41it/s, loss=0.0197]Train 79/100:   3%|▍             | 72/2540 [00:23<12:03,  3.41it/s, loss=0.0163]Train 79/100:   3%|▍             | 73/2540 [00:23<12:01,  3.42it/s, loss=0.0163]Train 79/100:   3%|▍             | 73/2540 [00:23<12:01,  3.42it/s, loss=0.0222]Train 79/100:   3%|▍             | 74/2540 [00:23<12:06,  3.40it/s, loss=0.0222]Train 79/100:   3%|▍             | 74/2540 [00:23<12:06,  3.40it/s, loss=0.0270]Train 79/100:   3%|▍             | 75/2540 [00:23<12:03,  3.41it/s, loss=0.0270]Train 79/100:   3%|▍             | 75/2540 [00:24<12:03,  3.41it/s, loss=0.0271]Train 79/100:   3%|▍             | 76/2540 [00:24<12:01,  3.41it/s, loss=0.0271]Train 79/100:   3%|▍             | 76/2540 [00:24<12:01,  3.41it/s, loss=0.0265]Train 79/100:   3%|▍             | 77/2540 [00:24<11:58,  3.43it/s, loss=0.0265]Train 79/100:   3%|▍             | 77/2540 [00:24<11:58,  3.43it/s, loss=0.0188]Train 79/100:   3%|▍             | 78/2540 [00:24<11:59,  3.42it/s, loss=0.0188]Train 79/100:   3%|▍             | 78/2540 [00:25<11:59,  3.42it/s, loss=0.0221]Train 79/100:   3%|▍             | 79/2540 [00:25<11:58,  3.43it/s, loss=0.0221]Train 79/100:   3%|▍             | 79/2540 [00:25<11:58,  3.43it/s, loss=0.0155]Train 79/100:   3%|▍             | 80/2540 [00:25<11:57,  3.43it/s, loss=0.0155]Train 79/100:   3%|▍             | 80/2540 [00:25<11:57,  3.43it/s, loss=0.0287]Train 79/100:   3%|▍             | 81/2540 [00:25<11:56,  3.43it/s, loss=0.0287]Train 79/100:   3%|▍             | 81/2540 [00:25<11:56,  3.43it/s, loss=0.0216]Train 79/100:   3%|▍             | 82/2540 [00:25<11:55,  3.44it/s, loss=0.0216]Train 79/100:   3%|▍             | 82/2540 [00:26<11:55,  3.44it/s, loss=0.0448]Train 79/100:   3%|▍             | 83/2540 [00:26<11:54,  3.44it/s, loss=0.0448]Train 79/100:   3%|▍             | 83/2540 [00:26<11:54,  3.44it/s, loss=0.0231]Train 79/100:   3%|▍             | 84/2540 [00:26<11:53,  3.44it/s, loss=0.0231]Train 79/100:   3%|▍             | 84/2540 [00:26<11:53,  3.44it/s, loss=0.0294]Train 79/100:   3%|▍             | 85/2540 [00:26<11:52,  3.44it/s, loss=0.0294]Train 79/100:   3%|▍             | 85/2540 [00:27<11:52,  3.44it/s, loss=0.0233]Train 79/100:   3%|▍             | 86/2540 [00:27<11:53,  3.44it/s, loss=0.0233]Train 79/100:   3%|▍             | 86/2540 [00:27<11:53,  3.44it/s, loss=0.0148]Train 79/100:   3%|▍             | 87/2540 [00:27<11:54,  3.43it/s, loss=0.0148]Train 79/100:   3%|▍             | 87/2540 [00:27<11:54,  3.43it/s, loss=0.0150]Train 79/100:   3%|▍             | 88/2540 [00:27<11:53,  3.43it/s, loss=0.0150]Train 79/100:   3%|▍             | 88/2540 [00:28<11:53,  3.43it/s, loss=0.0244]Train 79/100:   4%|▍             | 89/2540 [00:28<11:55,  3.43it/s, loss=0.0244]Train 79/100:   4%|▍             | 89/2540 [00:28<11:55,  3.43it/s, loss=0.0177]Train 79/100:   4%|▍             | 90/2540 [00:28<11:56,  3.42it/s, loss=0.0177]Train 79/100:   4%|▍             | 90/2540 [00:28<11:56,  3.42it/s, loss=0.0153]Train 79/100:   4%|▌             | 91/2540 [00:28<11:54,  3.43it/s, loss=0.0153]Train 79/100:   4%|▌             | 91/2540 [00:28<11:54,  3.43it/s, loss=0.0154]Train 79/100:   4%|▌             | 92/2540 [00:28<11:53,  3.43it/s, loss=0.0154]Train 79/100:   4%|▌             | 92/2540 [00:29<11:53,  3.43it/s, loss=0.0170]Train 79/100:   4%|▌             | 93/2540 [00:29<11:54,  3.43it/s, loss=0.0170]Train 79/100:   4%|▌             | 93/2540 [00:29<11:54,  3.43it/s, loss=0.0170]Train 79/100:   4%|▌             | 94/2540 [00:29<11:53,  3.43it/s, loss=0.0170]Train 79/100:   4%|▌             | 94/2540 [00:29<11:53,  3.43it/s, loss=0.0316]Train 79/100:   4%|▌             | 95/2540 [00:29<11:53,  3.43it/s, loss=0.0316]Train 79/100:   4%|▌             | 95/2540 [00:30<11:53,  3.43it/s, loss=0.0268]Train 79/100:   4%|▌             | 96/2540 [00:30<11:55,  3.41it/s, loss=0.0268]Train 79/100:   4%|▌             | 96/2540 [00:30<11:55,  3.41it/s, loss=0.0415]Train 79/100:   4%|▌             | 97/2540 [00:30<11:56,  3.41it/s, loss=0.0415]Train 79/100:   4%|▌             | 97/2540 [00:30<11:56,  3.41it/s, loss=0.0300]Train 79/100:   4%|▌             | 98/2540 [00:30<11:59,  3.39it/s, loss=0.0300]Train 79/100:   4%|▌             | 98/2540 [00:30<11:59,  3.39it/s, loss=0.0176]Train 79/100:   4%|▌             | 99/2540 [00:30<11:56,  3.41it/s, loss=0.0176]Train 79/100:   4%|▌             | 99/2540 [00:31<11:56,  3.41it/s, loss=0.0309]Train 79/100:   4%|▌            | 100/2540 [00:31<11:54,  3.41it/s, loss=0.0309]Train 79/100:   4%|▌            | 100/2540 [00:31<11:54,  3.41it/s, loss=0.0170]Train 79/100:   4%|▌            | 101/2540 [00:31<11:52,  3.42it/s, loss=0.0170]Train 79/100:   4%|▌            | 101/2540 [00:31<11:52,  3.42it/s, loss=0.0153]Train 79/100:   4%|▌            | 102/2540 [00:31<11:52,  3.42it/s, loss=0.0153]Train 79/100:   4%|▌            | 102/2540 [00:32<11:52,  3.42it/s, loss=0.0175]Train 79/100:   4%|▌            | 103/2540 [00:32<11:49,  3.43it/s, loss=0.0175]Train 79/100:   4%|▌            | 103/2540 [00:32<11:49,  3.43it/s, loss=0.0164]Train 79/100:   4%|▌            | 104/2540 [00:32<11:50,  3.43it/s, loss=0.0164]Train 79/100:   4%|▌            | 104/2540 [00:32<11:50,  3.43it/s, loss=0.0187]Train 79/100:   4%|▌            | 105/2540 [00:32<11:49,  3.43it/s, loss=0.0187]Train 79/100:   4%|▌            | 105/2540 [00:32<11:49,  3.43it/s, loss=0.0171]Train 79/100:   4%|▌            | 106/2540 [00:32<11:52,  3.41it/s, loss=0.0171]Train 79/100:   4%|▌            | 106/2540 [00:33<11:52,  3.41it/s, loss=0.0290]Train 79/100:   4%|▌            | 107/2540 [00:33<11:52,  3.42it/s, loss=0.0290]Train 79/100:   4%|▌            | 107/2540 [00:33<11:52,  3.42it/s, loss=0.0174]Train 79/100:   4%|▌            | 108/2540 [00:33<11:50,  3.42it/s, loss=0.0174]Train 79/100:   4%|▌            | 108/2540 [00:33<11:50,  3.42it/s, loss=0.0173]Train 79/100:   4%|▌            | 109/2540 [00:33<11:51,  3.42it/s, loss=0.0173]Train 79/100:   4%|▌            | 109/2540 [00:34<11:51,  3.42it/s, loss=0.0190]Train 79/100:   4%|▌            | 110/2540 [00:34<11:51,  3.42it/s, loss=0.0190]Train 79/100:   4%|▌            | 110/2540 [00:34<11:51,  3.42it/s, loss=0.0210]Train 79/100:   4%|▌            | 111/2540 [00:34<11:52,  3.41it/s, loss=0.0210]Train 79/100:   4%|▌            | 111/2540 [00:34<11:52,  3.41it/s, loss=0.0189]Train 79/100:   4%|▌            | 112/2540 [00:34<11:54,  3.40it/s, loss=0.0189]Train 79/100:   4%|▌            | 112/2540 [00:35<11:54,  3.40it/s, loss=0.0131]Train 79/100:   4%|▌            | 113/2540 [00:35<11:51,  3.41it/s, loss=0.0131]Train 79/100:   4%|▌            | 113/2540 [00:35<11:51,  3.41it/s, loss=0.0187]Train 79/100:   4%|▌            | 114/2540 [00:35<11:51,  3.41it/s, loss=0.0187]Train 79/100:   4%|▌            | 114/2540 [00:35<11:51,  3.41it/s, loss=0.0145]Train 79/100:   5%|▌            | 115/2540 [00:35<11:50,  3.41it/s, loss=0.0145]Train 79/100:   5%|▌            | 115/2540 [00:35<11:50,  3.41it/s, loss=0.0208]Train 79/100:   5%|▌            | 116/2540 [00:35<11:49,  3.42it/s, loss=0.0208]Train 79/100:   5%|▌            | 116/2540 [00:36<11:49,  3.42it/s, loss=0.0135]Train 79/100:   5%|▌            | 117/2540 [00:36<11:48,  3.42it/s, loss=0.0135]Train 79/100:   5%|▌            | 117/2540 [00:36<11:48,  3.42it/s, loss=0.0217]Train 79/100:   5%|▌            | 118/2540 [00:36<11:50,  3.41it/s, loss=0.0217]Train 79/100:   5%|▌            | 118/2540 [00:36<11:50,  3.41it/s, loss=0.0234]Train 79/100:   5%|▌            | 119/2540 [00:36<11:47,  3.42it/s, loss=0.0234]Train 79/100:   5%|▌            | 119/2540 [00:37<11:47,  3.42it/s, loss=0.0177]Train 79/100:   5%|▌            | 120/2540 [00:37<11:44,  3.43it/s, loss=0.0177]Train 79/100:   5%|▌            | 120/2540 [00:37<11:44,  3.43it/s, loss=0.0130]Train 79/100:   5%|▌            | 121/2540 [00:37<11:43,  3.44it/s, loss=0.0130]Train 79/100:   5%|▌            | 121/2540 [00:37<11:43,  3.44it/s, loss=0.0208]Train 79/100:   5%|▌            | 122/2540 [00:37<11:42,  3.44it/s, loss=0.0208]Train 79/100:   5%|▌            | 122/2540 [00:37<11:42,  3.44it/s, loss=0.0350]Train 79/100:   5%|▋            | 123/2540 [00:37<11:42,  3.44it/s, loss=0.0350]Train 79/100:   5%|▋            | 123/2540 [00:38<11:42,  3.44it/s, loss=0.0148]Train 79/100:   5%|▋            | 124/2540 [00:38<11:42,  3.44it/s, loss=0.0148]Train 79/100:   5%|▋            | 124/2540 [00:38<11:42,  3.44it/s, loss=0.0196]Train 79/100:   5%|▋            | 125/2540 [00:38<11:40,  3.45it/s, loss=0.0196]Train 79/100:   5%|▋            | 125/2540 [00:38<11:40,  3.45it/s, loss=0.0187]Train 79/100:   5%|▋            | 126/2540 [00:38<11:41,  3.44it/s, loss=0.0187]Train 79/100:   5%|▋            | 126/2540 [00:39<11:41,  3.44it/s, loss=0.0201]Train 79/100:   5%|▋            | 127/2540 [00:39<11:37,  3.46it/s, loss=0.0201]Train 79/100:   5%|▋            | 127/2540 [00:39<11:37,  3.46it/s, loss=0.0193]Train 79/100:   5%|▋            | 128/2540 [00:39<11:38,  3.45it/s, loss=0.0193]Train 79/100:   5%|▋            | 128/2540 [00:39<11:38,  3.45it/s, loss=0.0644]Train 79/100:   5%|▋            | 129/2540 [00:39<11:37,  3.45it/s, loss=0.0644]Train 79/100:   5%|▋            | 129/2540 [00:39<11:37,  3.45it/s, loss=0.0331]Train 79/100:   5%|▋            | 130/2540 [00:39<11:39,  3.45it/s, loss=0.0331]Train 79/100:   5%|▋            | 130/2540 [00:40<11:39,  3.45it/s, loss=0.0161]Train 79/100:   5%|▋            | 131/2540 [00:40<11:38,  3.45it/s, loss=0.0161]Train 79/100:   5%|▋            | 131/2540 [00:40<11:38,  3.45it/s, loss=0.0243]Train 79/100:   5%|▋            | 132/2540 [00:40<11:38,  3.45it/s, loss=0.0243]Train 79/100:   5%|▋            | 132/2540 [00:40<11:38,  3.45it/s, loss=0.0324]Train 79/100:   5%|▋            | 133/2540 [00:40<11:37,  3.45it/s, loss=0.0324]Train 79/100:   5%|▋            | 133/2540 [00:41<11:37,  3.45it/s, loss=0.0259]Train 79/100:   5%|▋            | 134/2540 [00:41<11:38,  3.44it/s, loss=0.0259]Train 79/100:   5%|▋            | 134/2540 [00:41<11:38,  3.44it/s, loss=0.0169]Train 79/100:   5%|▋            | 135/2540 [00:41<11:35,  3.46it/s, loss=0.0169]Train 79/100:   5%|▋            | 135/2540 [00:41<11:35,  3.46it/s, loss=0.0368]Train 79/100:   5%|▋            | 136/2540 [00:41<11:35,  3.46it/s, loss=0.0368]Train 79/100:   5%|▋            | 136/2540 [00:42<11:35,  3.46it/s, loss=0.0317]Train 79/100:   5%|▋            | 137/2540 [00:42<11:33,  3.46it/s, loss=0.0317]Train 79/100:   5%|▋            | 137/2540 [00:42<11:33,  3.46it/s, loss=0.0150]Train 79/100:   5%|▋            | 138/2540 [00:42<11:34,  3.46it/s, loss=0.0150]Train 79/100:   5%|▋            | 138/2540 [00:42<11:34,  3.46it/s, loss=0.0239]Train 79/100:   5%|▋            | 139/2540 [00:42<11:35,  3.45it/s, loss=0.0239]Train 79/100:   5%|▋            | 139/2540 [00:42<11:35,  3.45it/s, loss=0.0175]Train 79/100:   6%|▋            | 140/2540 [00:42<11:36,  3.45it/s, loss=0.0175]Train 79/100:   6%|▋            | 140/2540 [00:43<11:36,  3.45it/s, loss=0.0178]Train 79/100:   6%|▋            | 141/2540 [00:43<11:35,  3.45it/s, loss=0.0178]Train 79/100:   6%|▋            | 141/2540 [00:43<11:35,  3.45it/s, loss=0.0172]Train 79/100:   6%|▋            | 142/2540 [00:43<11:34,  3.45it/s, loss=0.0172]Train 79/100:   6%|▋            | 142/2540 [00:43<11:34,  3.45it/s, loss=0.0285]Train 79/100:   6%|▋            | 143/2540 [00:43<11:35,  3.45it/s, loss=0.0285]Train 79/100:   6%|▋            | 143/2540 [00:44<11:35,  3.45it/s, loss=0.0142]Train 79/100:   6%|▋            | 144/2540 [00:44<11:35,  3.44it/s, loss=0.0142]W0119 15:41:41.584000 1195715 torch/distributed/elastic/agent/server/api.py:704] Received 15 death signal, shutting down workers
+W0119 15:41:41.590000 1195715 torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1195808 closing signal SIGTERM
+W0119 15:41:41.591000 1195715 torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1195809 closing signal SIGTERM
+W0119 15:41:41.593000 1195715 torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1195810 closing signal SIGTERM
+W0119 15:41:41.595000 1195715 torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1195811 closing signal SIGTERM
+Traceback (most recent call last):
+  File "/home/ps/.local/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/ps/.local/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/ps/.local/lib/python3.12/site-packages/torch/distributed/run.py", line 919, in main
+    run(args)
+  File "/home/ps/.local/lib/python3.12/site-packages/torch/distributed/run.py", line 910, in run
+    elastic_launch(
+  File "/home/ps/.local/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ps/.local/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 260, in launch_agent
+    result = agent.run()
+             ^^^^^^^^^^^
+  File "/home/ps/.local/lib/python3.12/site-packages/torch/distributed/elastic/metrics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/ps/.local/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 696, in run
+    result = self._invoke_run(role)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ps/.local/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 855, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/home/ps/.local/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 1195715 got signal: 15

@@ -22,6 +22,7 @@ def sample_batch(
     schedule_cfg: dict,
     init_method: Literal["noise", "noisy_input", "mixed"] = "noise",
     noise_ratio: float = 1.0,
+    init_timestep_ratio: float = 1.0,
 ) -> torch.Tensor:
     """对一个 Batch 进行完整的去噪采样 (Inference)。
 
@@ -39,17 +40,28 @@ def sample_batch(
             - "noisy_input": 从有云图像加噪开始 (图像修复)
             - "mixed": 噪声与条件图像的混合
         noise_ratio (float): mixed 模式下的噪声比例 (0~1)。
+        init_timestep_ratio (float): noisy_input 模式下的起始时间步比例 (0~1)。
+            例如 0.8 表示从 t=0.8*T 开始，保留更多原始图像信息。
 
     Returns:
         torch.Tensor: 去噪后的图像，形状 (B, C, H, W)。
     """
     model.eval()
     device = y.device
+    
+    # 读取配置中的初始化时间步比例
+    init_timestep_ratio = float(schedule_cfg.get("init_timestep_ratio", init_timestep_ratio))
+    
+    # 计算起始时间步 (用于 noisy_input 模式和时间步序列生成)
+    t_start_val = diffusion.timesteps - 1  # 默认从 T-1 开始
 
     # 1. 初始化采样起点
     if init_method == "noisy_input":
         # 从有云图像加噪开始，保留更多结构信息
-        t_start = torch.full((y.size(0),), diffusion.timesteps - 1, device=device, dtype=torch.long)
+        # 使用 init_timestep_ratio 控制起始噪声程度
+        t_start_val = int((diffusion.timesteps - 1) * init_timestep_ratio)
+        t_start_val = max(1, min(t_start_val, diffusion.timesteps - 1))
+        t_start = torch.full((y.size(0),), t_start_val, device=device, dtype=torch.long)
         x = diffusion.q_sample(y, t_start)
     elif init_method == "mixed":
         # 混合初始化: 部分噪声 + 部分条件图像
@@ -60,7 +72,11 @@ def sample_batch(
         x = torch.randn_like(y)
 
     # 2. 获取采样时间步序列
-    t_seq = diffusion.sample_timesteps(steps)
+    if init_method == "noisy_input":
+        # 如果从较小的时间步开始，采样序列也需要调整
+        t_seq = torch.linspace(t_start_val, 0, steps).long().tolist()
+    else:
+        t_seq = diffusion.sample_timesteps(steps)
 
     # 3. 确定采样方法
     method = schedule_cfg.get("method", "ddim")
@@ -96,6 +112,7 @@ def sample_with_progress(
     schedule_cfg: dict,
     init_method: Literal["noise", "noisy_input", "mixed"] = "noise",
     noise_ratio: float = 1.0,
+    init_timestep_ratio: float = 1.0,
     progress_callback=None,
 ) -> torch.Tensor:
     """带进度回调的采样函数。
@@ -111,10 +128,18 @@ def sample_with_progress(
     """
     model.eval()
     device = y.device
+    
+    # 读取配置中的初始化时间步比例
+    init_timestep_ratio = float(schedule_cfg.get("init_timestep_ratio", init_timestep_ratio))
+    
+    # 计算起始时间步
+    t_start_val = diffusion.timesteps - 1
 
     # 初始化
     if init_method == "noisy_input":
-        t_start = torch.full((y.size(0),), diffusion.timesteps - 1, device=device, dtype=torch.long)
+        t_start_val = int((diffusion.timesteps - 1) * init_timestep_ratio)
+        t_start_val = max(1, min(t_start_val, diffusion.timesteps - 1))
+        t_start = torch.full((y.size(0),), t_start_val, device=device, dtype=torch.long)
         x = diffusion.q_sample(y, t_start)
     elif init_method == "mixed":
         noise = torch.randn_like(y)
@@ -122,7 +147,12 @@ def sample_with_progress(
     else:
         x = torch.randn_like(y)
 
-    t_seq = diffusion.sample_timesteps(steps)
+    # 获取采样时间步序列
+    if init_method == "noisy_input":
+        t_seq = torch.linspace(t_start_val, 0, steps).long().tolist()
+    else:
+        t_seq = diffusion.sample_timesteps(steps)
+        
     method = schedule_cfg.get("method", "ddim")
     eta = float(schedule_cfg.get("eta", 0.0))
     use_ddim = method != "ddpm" or steps < diffusion.timesteps

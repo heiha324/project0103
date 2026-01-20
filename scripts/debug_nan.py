@@ -83,6 +83,8 @@ def main():
         beta_start=cfg["schedule"].get("beta_start", 1e-4),
         beta_end=cfg["schedule"].get("beta_end", 2e-2),
         device=device,
+        x0_clip_min=cfg["schedule"].get("x0_clip_min", 0.0),
+        x0_clip_max=cfg["schedule"].get("x0_clip_max", 1.0),
     )
 
     # Check diffusion schedule

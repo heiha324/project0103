@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 import sys
 
@@ -12,6 +13,7 @@ sys.path.append(str(ROOT / "src"))
 
 import numpy as np
 import torch
+import torch.distributed as dist
 try:  # pragma: no cover - optional dependency
     from tqdm import tqdm
 except Exception:  # pragma: no cover
@@ -50,8 +52,24 @@ def main() -> None:
     parser.add_argument("--output", type=str, default="outputs/diffusion/samples")
     args = parser.parse_args()
 
+    # --- Distributed Init ---
+    local_rank = int(os.environ.get("LOCAL_RANK", 0))
+    rank = int(os.environ.get("RANK", 0))
+    world_size = int(os.environ.get("WORLD_SIZE", 1))
+    is_distributed = world_size > 1
+
+    if is_distributed:
+        if torch.cuda.is_available():
+            torch.cuda.set_device(local_rank)
+            device = torch.device("cuda", local_rank)
+            dist.init_process_group(backend="nccl", init_method="env://")
+        else:
+            device = torch.device("cpu")
+            dist.init_process_group(backend="gloo", init_method="env://")
+    else:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     cfg = load_config(args.config)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = ConditionalUNet(
         x_channels=cfg["model"]["x_channels"],
@@ -70,8 +88,8 @@ def main() -> None:
         beta_start=schedule_cfg.get("beta_start", 1e-4),
         beta_end=schedule_cfg.get("beta_end", 2e-2),
         device=device,
-        x0_clip_min=schedule_cfg.get("x0_clip_min", -1.0),
-        x0_clip_max=schedule_cfg.get("x0_clip_max", 2.0),
+        x0_clip_min=schedule_cfg.get("x0_clip_min", 0.0),
+        x0_clip_max=schedule_cfg.get("x0_clip_max", 1.0),
     )
 
     data_cfg = cfg["sen12ms"]
@@ -107,10 +125,22 @@ def main() -> None:
         )
 
     output_dir = Path(args.output)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    if is_distributed:
+        if rank == 0:
+            output_dir.mkdir(parents=True, exist_ok=True)
+        dist.barrier()
+    else:
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-    indices = range(len(dataset))
-    if tqdm is not None:
+    # --- Slice Indices ---
+    all_indices = list(range(len(dataset)))
+    if is_distributed:
+        indices = all_indices[rank::world_size]
+        print(f"Rank {rank}/{world_size}: Processing {len(indices)} samples")
+    else:
+        indices = all_indices
+
+    if tqdm is not None and (not is_distributed or rank == 0):
         indices = tqdm(indices, desc="Sample", ncols=80)
     
     sampling_cfg = cfg["sampling"]
@@ -134,7 +164,13 @@ def main() -> None:
         sample_np = sample.squeeze(0).cpu().numpy().astype(np.float32)
         np.save(output_dir / f"sample_{idx:05d}.npy", sample_np)
 
-    print(f"Saved samples to {output_dir}")
+    if is_distributed:
+        dist.barrier()
+        if rank == 0:
+            print(f"All ranks finished. Saved samples to {output_dir}")
+        dist.destroy_process_group()
+    else:
+        print(f"Saved samples to {output_dir}")
 
 
 if __name__ == "__main__":

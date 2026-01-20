@@ -97,8 +97,8 @@ class GaussianDiffusion:
         beta_start: float = 1e-4,
         beta_end: float = 2e-2,
         device: torch.device | None = None,
-        x0_clip_min: float = -1.0,
-        x0_clip_max: float = 2.0,
+        x0_clip_min: float = 0.0,
+        x0_clip_max: float = 1.0,
     ) -> None:
         """初始化扩散模型参数并预计算系数。
 

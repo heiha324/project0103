@@ -1,0 +1,31 @@
+# Python 编译文件与缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 虚拟环境 (常见命名)
+.env
+.venv
+env/
+venv/
+
+# IDE 与 系统文件
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# 项目运行时生成的目录 (AGENTS.md 中提及)
+logs/
+outputs/
+
+# 评估生成的图片 (eval 目录下看到的 png)
+eval/*.png
+
+# 临时文件
+time.txt
+
+# 模型权重文件 (以防误提交)
+*.pth
+*.ckpt
