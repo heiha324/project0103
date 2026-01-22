@@ -268,12 +268,14 @@ def evaluate_single_step(
                     min_weight=cfg["loss"].get("aux_min_weight", 0.1),
                     max_weight=cfg["loss"].get("aux_max_weight", 1.0),
                 )
-                time_scale = aux_time_weight.mean()
-                
-                loss_recon = F.l1_loss(x0_pred, x0) * time_scale
+                # 按样本时间步加权 (E[w * loss])
+                loss_recon_raw = F.l1_loss(x0_pred, x0, reduction="none")
+                grad_weight_map = torch.ones_like(x0[:, :1, :, :])
+                weight_map = grad_weight_map * aux_time_weight
+                loss_recon = (loss_recon_raw * aux_time_weight).mean()
                 # 注意: grad_weight_map 为全 1，表示对所有区域同等加权
                 # 如需对云边缘区域加权，可使用 alpha 通道计算边缘掩码
-                loss_grad = grad_l1_loss(x0_pred, x0, torch.ones_like(x0[:, :1, :, :])) * time_scale
+                loss_grad = grad_l1_loss(x0_pred, x0, weight_map)
                 
                 recon_weight = cfg["loss"].get("recon_weight", 1.0)
                 grad_weight = cfg["loss"].get("grad_weight", 0.5)
@@ -937,29 +939,39 @@ def main() -> None:
                 x0_pred = diffusion.predict_x0_from_eps(x_t, y, t, eps_pred, clip=False)
                 x0_pred = x0_pred.clamp(diffusion.x0_clip_min, diffusion.x0_clip_max)
                 
-                loss_recon_raw = F.l1_loss(x0_pred, x0)
+                # 按样本时间步加权 (E[w * loss])
+                loss_recon_raw = F.l1_loss(x0_pred, x0, reduction="none")
                 # [修复 #4] grad_weight_map 添加注释说明
                 # 注意: grad_weight_map 为全 1，表示对所有区域同等加权
                 # 如需对云边缘区域加权，可使用 alpha 通道计算边缘掩码
                 grad_weight_map = torch.ones_like(x0[:, :1, :, :])
-                loss_grad_raw = grad_l1_loss(x0_pred, x0, grad_weight_map)
-                
-                time_scale = aux_time_weight.mean()
-                loss_recon = loss_recon_raw * time_scale
-                loss_grad = loss_grad_raw * time_scale
+                weight_map = grad_weight_map * aux_time_weight
+                loss_recon = (loss_recon_raw * aux_time_weight).mean()
+                loss_grad = grad_l1_loss(x0_pred, x0, weight_map)
 
                 recon_weight = cfg["loss"].get("recon_weight", 1.0)
                 grad_weight = cfg["loss"].get("grad_weight", 0.5)
                 loss = loss_diff + recon_weight * loss_recon + grad_weight * loss_grad
 
             # [修复 #10] NaN/Inf 检测提前到 optimizer.step() 之前
-            # 这样可以避免 NaN 污染模型权重和 EMA
-            if torch.isnan(loss) or torch.isinf(loss):
+            # 这样可以避免 NaN 污染模型权重和 EMA，并在 DDP 下同步退出
+            loss_is_finite = torch.isfinite(loss.detach())
+            if ddp:
+                flag = torch.tensor(float(loss_is_finite.item()), device=device)
+                dist.all_reduce(flag, op=dist.ReduceOp.MIN)
+                loss_is_finite = flag.item() == 1.0
+            else:
+                loss_is_finite = bool(loss_is_finite.item())
+
+            if not loss_is_finite:
                 if is_main:
                     log_message(
                         f"ERROR: NaN/Inf loss detected at epoch {epoch+1} step {steps} BEFORE optimizer.step()",
                         logger, console=True, use_tqdm=True
                     )
+                    log_message(f"  loss_diff: {loss_diff.item()}", logger, console=True, use_tqdm=True)
+                    log_message(f"  loss_recon: {loss_recon.item()}", logger, console=True, use_tqdm=True)
+                    log_message(f"  loss_grad: {loss_grad.item()}", logger, console=True, use_tqdm=True)
                 raise RuntimeError(f"NaN/Inf loss at epoch {epoch+1} step {steps}")
 
             if amp_enabled:

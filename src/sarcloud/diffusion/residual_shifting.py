@@ -46,12 +46,16 @@ def make_eta_schedule(
     if schedule_type == "exponential":
         # 指数调度 (EDM-CR 默认)
         # 使模型在早期（接近 y）有更多的调整空间
-        etas_start = min_eta
-        increaser = np.exp(np.log(max_eta / etas_start) / (timesteps - 1))
+        # 注意: 这里需要在 sqrt(η) 空间做指数调度
+        sqrt_etas_start = np.sqrt(min_eta)
+        sqrt_etas_end = np.sqrt(max_eta)
+        increaser = np.exp(
+            np.log(sqrt_etas_end / sqrt_etas_start) / (timesteps - 1)
+        )
         base = np.ones(timesteps) * increaser
         power_timestep = np.linspace(0, 1, timesteps, endpoint=True) ** power
         power_timestep *= (timesteps - 1)
-        sqrt_etas = np.power(base, power_timestep) * etas_start
+        sqrt_etas = np.power(base, power_timestep) * sqrt_etas_start
     elif schedule_type == "linear":
         # 线性调度
         sqrt_etas = np.linspace(np.sqrt(min_eta), np.sqrt(max_eta), timesteps)

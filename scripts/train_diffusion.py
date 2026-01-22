@@ -292,14 +292,14 @@ def evaluate(
                     min_weight=cfg["loss"].get("aux_min_weight", 0.1),
                     max_weight=cfg["loss"].get("aux_max_weight", 1.0),
                 )
-                time_scale = aux_time_weight.mean()
-                
-                # 2. 重建损失 (L1)
-                loss_recon = F.l1_loss(x0_pred, x0) * time_scale
-                
-                # 3. 梯度损失 (Edge/Texture)
+                # 按样本时间步加权 (E[w * loss])
+                loss_recon_raw = F.l1_loss(x0_pred, x0, reduction="none")
                 grad_weight_map = torch.ones_like(x0[:, :1, :, :])
-                loss_grad = grad_l1_loss(x0_pred, x0, grad_weight_map) * time_scale
+                weight_map = grad_weight_map * aux_time_weight
+                # 2. 重建损失 (L1)
+                loss_recon = (loss_recon_raw * aux_time_weight).mean()
+                # 3. 梯度损失 (Edge/Texture)
+                loss_grad = grad_l1_loss(x0_pred, x0, weight_map)
                 
                 # 总损失加权求和
                 recon_weight = cfg["loss"].get("recon_weight", 1.0)
@@ -901,18 +901,36 @@ def main() -> None:
                 # 使用 diffusion 对象的 clip 范围进行数值保护
                 x0_pred = x0_pred.clamp(diffusion.x0_clip_min, diffusion.x0_clip_max)
                 
-                loss_recon_raw = F.l1_loss(x0_pred, x0)
+                # 按样本时间步加权 (E[w * loss])
+                loss_recon_raw = F.l1_loss(x0_pred, x0, reduction="none")
                 grad_weight_map = torch.ones_like(x0[:, :1, :, :])
-                loss_grad_raw = grad_l1_loss(x0_pred, x0, grad_weight_map)
-                
-                # 应用时间权重
-                time_scale = aux_time_weight.mean()
-                loss_recon = loss_recon_raw * time_scale
-                loss_grad = loss_grad_raw * time_scale
+                weight_map = grad_weight_map * aux_time_weight
+                loss_recon = (loss_recon_raw * aux_time_weight).mean()
+                loss_grad = grad_l1_loss(x0_pred, x0, weight_map)
 
                 recon_weight = cfg["loss"].get("recon_weight", cfg["loss"].get("cloud_weight", 1.0))
                 grad_weight = cfg["loss"].get("grad_weight", 0.5)
                 loss = loss_diff + recon_weight * loss_recon + grad_weight * loss_grad
+
+            # NaN/Inf 检测提前到 optimizer.step() 之前，避免污染权重/EMA
+            loss_is_finite = torch.isfinite(loss.detach())
+            if ddp:
+                flag = torch.tensor(float(loss_is_finite.item()), device=device)
+                dist.all_reduce(flag, op=dist.ReduceOp.MIN)
+                loss_is_finite = flag.item() == 1.0
+            else:
+                loss_is_finite = bool(loss_is_finite.item())
+
+            if not loss_is_finite:
+                if is_main:
+                    log_message(
+                        f"ERROR: 发现 Loss 为 NaN/Inf (Epoch {epoch+1} Step {steps}) - BEFORE optimizer.step()",
+                        logger, console=True, use_tqdm=True
+                    )
+                    log_message(f"  loss_diff: {loss_diff.item()}", logger, console=True, use_tqdm=True)
+                    log_message(f"  loss_recon: {loss_recon.item()}", logger, console=True, use_tqdm=True)
+                    log_message(f"  loss_grad: {loss_grad.item()}", logger, console=True, use_tqdm=True)
+                raise RuntimeError(f"NaN/Inf loss at epoch {epoch+1} step {steps}")
 
             # 反向传播与优化
             if amp_enabled:
@@ -935,17 +953,6 @@ def main() -> None:
                 
             # 更新 EMA 权重
             ema.update(ema_model)
-
-            # 监控 NaN
-            if torch.isnan(loss) or torch.isinf(loss):
-                if is_main:
-                    log_message(
-                        f"ERROR: 发现 Loss 为 NaN/Inf (Epoch {epoch+1} Step {steps})",
-                        logger, console=True, use_tqdm=True
-                    )
-                    log_message(f"  loss_diff: {loss_diff.item()}", logger, console=True, use_tqdm=True)
-                    log_message(f"  loss_recon: {loss_recon.item()}", logger, console=True, use_tqdm=True)
-                raise RuntimeError(f"NaN loss at epoch {epoch+1} step {steps}")
 
             epoch_loss += float(loss.item())
             steps += 1
