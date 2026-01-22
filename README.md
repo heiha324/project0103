@@ -72,23 +72,56 @@ python scripts/cache_alpha.py --config configs/alpha_cache.yaml
 ```
 
 ### 3) 训练扩散模型
+
+#### 方案 A: 标准 DDPM（原版）
 ```bash
 python scripts/train_diffusion.py --config configs/diffusion.yaml
 ```
 
+#### 方案 B: Residual Shifting Diffusion（推荐）
+```bash
+python scripts/train_diffusion_rs.py --config configs/diffusion_rs.yaml
+```
+
+> **为什么推荐 Residual Shifting?**
+>
+> 标准 DDPM 的采样起点是纯高斯噪声，模型需要从零开始"生成"清晰图像。
+> 但去云任务的目标是将有云图像转换为清晰图像，云并不是高斯噪声。
+>
+> Residual Shifting 的关键改进：
+> - **前向过程**: `x_t = (1-η_t)·x0 + η_t·y + √η_t·κ·noise`
+> - **采样起点**: `x_T = y + noise`（从有云图像开始）
+> - **物理意义**: 扩散过程从有云图像 y 向清晰图像 x0 平滑过渡
+
 ### 4) 采样与评估
 ```bash
+# 标准 DDPM
 python scripts/sample_diffusion.py --config configs/diffusion.yaml
+
+# Residual Shifting (采样脚本与训练脚本集成)
+# 训练脚本会在每个 epoch 结束时自动进行采样可视化
+
+# 区域评估
 python scripts/eval_regions.py --config configs/eval.yaml
 ```
 
 ## 关键配置项
-- `configs/rsnet_whu_ori.yaml`
-  - `train.num_epochs`: 训练轮数
-  - `train.lr`: 学习率
-  - `train.quiet`: 是否静默（false 会显示 tqdm）
-  - `output.auto_timestamp`: 每次运行自动新目录
-  - `output.log_dir`: 本地日志目录
+
+### RS-Net 配置 (`configs/rsnet_whu_ori.yaml`)
+- `train.num_epochs`: 训练轮数
+- `train.lr`: 学习率
+- `train.quiet`: 是否静默（false 会显示 tqdm）
+- `output.auto_timestamp`: 每次运行自动新目录
+- `output.log_dir`: 本地日志目录
+
+### Residual Shifting 扩散配置 (`configs/diffusion_rs.yaml`)
+- `diffusion.timesteps`: 扩散步数 (默认 1000)
+- `diffusion.kappa`: 噪声强度系数 (默认 1.0)
+- `diffusion.schedule_type`: η 调度类型 (`exponential`/`linear`/`cosine`)
+- `diffusion.min_eta`/`max_eta`: η 的范围
+- `sampling.steps`: 采样步数 (DDIM 可用较少步数，如 50)
+- `sampling.method`: 采样方法 (`ddpm`/`ddim`)
+- `sampling.eta`: DDIM 随机性系数 (0.0 为确定性)
 
 ## 常见问题
 ### 1. DDP 卡在验证/epoch 切换

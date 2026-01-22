@@ -43,7 +43,17 @@
 - `python scripts/cache_alpha.py --config configs/alpha_cache.yaml`
 
 ### 扩散模型训练 (Diffusion Training)
+
+#### 标准 DDPM（原版）
 - `python scripts/train_diffusion.py --config configs/diffusion.yaml`
+
+#### Residual Shifting Diffusion（推荐）
+- `python scripts/train_diffusion_rs.py --config configs/diffusion_rs.yaml`
+
+> Residual Shifting 与标准 DDPM 的区别：
+> - 前向过程: `x_t = (1-η)*x0 + η*y + √η*κ*noise` (需要有云图像 y)
+> - 采样起点: `x_T = y + noise` (从有云图像开始，而非纯噪声)
+> - 适用于图像到图像转换任务（如去云）
 
 ### 采样与评估 (Sampling + Evaluation)
 - `python scripts/sample_diffusion.py --config configs/diffusion.yaml`

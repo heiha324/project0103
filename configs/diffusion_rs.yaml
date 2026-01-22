@@ -1,0 +1,96 @@
+seed: 42
+
+# ============================================================
+# 残差偏移扩散模型配置 (Residual Shifting Diffusion)
+# ============================================================
+# 与标准 DDPM 的区别：
+# 1. 扩散过程从有云图像 y 向清晰图像 x0 转换
+# 2. 采样起点是 y + noise，而不是纯噪声
+# 3. 使用 η 调度表替代 β 调度表
+# ============================================================
+
+# 扩散模型参数
+diffusion:
+  timesteps: 1000
+  kappa: 1.0              # 噪声强度系数
+  schedule_type: "linear"       # 改为 linear 以均衡训练难度
+  min_eta: 0.001          # η 的最小值 (t≈0 时)
+  max_eta: 0.99           # η 的最大值 (t≈T 时)
+  power: 2.0              # 指数调度的幂次 (仅用于 exponential)
+
+# U-Net 模型参数
+model:
+  x_channels: 13          # 输入/输出通道数 (Sentinel-2 全波段)
+  y_channels: 13          # 条件图像通道数 (有云图像)
+  s_channels: 2           # SAR 条件通道数 (VV, VH)
+  base_channels: 64       # 基础特征通道数
+  depth: 4                # U-Net 深度
+  time_dim: 256           # 时间嵌入维度
+
+# 训练参数
+train:
+  batch_size: 16
+  num_epochs: 100
+  lr: 2.0e-5
+  weight_decay: 1.0e-4
+  ema_decay: 0.999
+  amp: false              # 混合精度训练
+  grad_clip: 1.0          # 梯度裁剪
+  use_scheduler: true
+  warmup_epochs: 5
+
+# 损失函数权重
+loss:
+  recon_weight: 1.0       # 重建损失权重
+  grad_weight: 0.5        # 梯度损失权重
+  aux_min_weight: 0.1     # 辅助损失最小时间权重
+  aux_max_weight: 1.0     # 辅助损失最大时间权重
+
+# x0 预测值截断范围
+schedule:
+  x0_clip_min: 0.0
+  x0_clip_max: 1.0
+
+# 采样参数
+sampling:
+  steps: 50               # 采样步数 (DDIM 可以用较少步数)
+  method: "ddim"          # 采样方法: ddpm 或 ddim
+  eta: 0.0                # DDIM 随机性系数 (0.0 为确定性)
+
+# 训练数据集
+sen12ms:
+  dataset: "sen12mscr_raw"
+  root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
+  image_ext: ".tif"
+  s2_clip_min: 0.0
+  s2_clip_max: 10000.0
+  s1_db_min: -25.0
+  s1_db_max: 0.0
+  split_csv: "supplementary_SEN12MSCR/outdated_train_val_test_patches.csv"
+  split: "train"
+
+# 测试数据集
+test:
+  dataset: "sen12mscr_raw"
+  root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
+  image_ext: ".tif"
+  s2_clip_min: 0.0
+  s2_clip_max: 10000.0
+  s1_db_min: -25.0
+  s1_db_max: 0.0
+  split_csv: "supplementary_SEN12MSCR/outdated_train_val_test_patches.csv"
+  split: "test"
+
+# 输出目录
+output:
+  dir: "/home/data/KXShen/model/project0103/diffusion_rs_sen12mscr"
+
+# 可视化设置
+vis:
+  num_samples: 8
+  # Sentinel-2 波段顺序: B1,B2,B3,B4,B5,B6,B7,B8,B8A,B9,B10,B11,B12
+  # RGB 对应: B4(Red)=index3, B3(Green)=index2, B2(Blue)=index1
+  rgb_indices: [3, 2, 1]
+  steps: [50, 100, 500, 1000]
+  auto_scale: true
+  auto_scale_ref: "self"
