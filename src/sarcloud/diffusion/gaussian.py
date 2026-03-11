@@ -19,6 +19,8 @@ from typing import Iterable, List, Tuple
 import torch
 import torch.nn.functional as F
 
+from sarcloud.diffusion.timesteps import make_time_sequence
+
 
 def make_beta_schedule(
     timesteps: int,
@@ -233,7 +235,7 @@ class GaussianDiffusion:
         """
         # 1. 预测 x0 (包含 clamp)
         if (t == 0).all():
-            return self.predict_x0_from_eps(x_t, t, eps)
+            return self.predict_x0_from_eps(x_t, t, eps, clip=True)
             
         # 2. 计算后验分布的均值 mu_tilde(x_t, x0)
         beta_t = extract(self.betas, t, x_t.shape)
@@ -325,7 +327,7 @@ class GaussianDiffusion:
         Returns:
             List[int]: 时间步列表，从 T-1 递减到 0。
         """
-        return torch.linspace(self.timesteps - 1, 0, steps).long().tolist()
+        return make_time_sequence(self.timesteps - 1, 0, steps)
 
 
 def schedule_weight(step: int, total: int, stage1: float, stage2: float, stage3: float,

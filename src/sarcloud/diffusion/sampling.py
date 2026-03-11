@@ -11,6 +11,12 @@ from typing import Literal
 import torch
 
 from sarcloud.diffusion.gaussian import GaussianDiffusion
+from sarcloud.diffusion.timesteps import make_time_sequence
+
+
+def _make_time_sequence(start_t: int, end_t: int, steps: int) -> list[int]:
+    """生成严格递减且包含端点的时间步序列。"""
+    return make_time_sequence(start_t, end_t, steps)
 
 
 def sample_batch(
@@ -74,9 +80,9 @@ def sample_batch(
     # 2. 获取采样时间步序列
     if init_method == "noisy_input":
         # 如果从较小的时间步开始，采样序列也需要调整
-        t_seq = torch.linspace(t_start_val, 0, steps).long().tolist()
+        t_seq = _make_time_sequence(t_start_val, 0, steps)
     else:
-        t_seq = diffusion.sample_timesteps(steps)
+        t_seq = _make_time_sequence(diffusion.timesteps - 1, 0, steps)
 
     # 3. 确定采样方法
     method = schedule_cfg.get("method", "ddim")
@@ -149,9 +155,9 @@ def sample_with_progress(
 
     # 获取采样时间步序列
     if init_method == "noisy_input":
-        t_seq = torch.linspace(t_start_val, 0, steps).long().tolist()
+        t_seq = _make_time_sequence(t_start_val, 0, steps)
     else:
-        t_seq = diffusion.sample_timesteps(steps)
+        t_seq = _make_time_sequence(diffusion.timesteps - 1, 0, steps)
         
     method = schedule_cfg.get("method", "ddim")
     eta = float(schedule_cfg.get("eta", 0.0))

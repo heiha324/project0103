@@ -20,8 +20,8 @@ diffusion:
 
 # U-Net 模型参数
 model:
-  x_channels: 13          # 输入/输出通道数 (Sentinel-2 全波段)
-  y_channels: 13          # 条件图像通道数 (有云图像)
+  x_channels: 3           # 输入/输出通道数 (RGB)
+  y_channels: 3           # 条件图像通道数 (有云图像, RGB)
   s_channels: 2           # SAR 条件通道数 (VV, VH)
   base_channels: 64       # 基础特征通道数
   depth: 4                # U-Net 深度
@@ -62,6 +62,7 @@ sen12ms:
   dataset: "sen12mscr_raw"
   root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
   image_ext: ".tif"
+  bands: [1, 2, 3]
   s2_clip_min: 0.0
   s2_clip_max: 10000.0
   s1_db_min: -25.0
@@ -74,6 +75,7 @@ test:
   dataset: "sen12mscr_raw"
   root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
   image_ext: ".tif"
+  bands: [1, 2, 3]
   s2_clip_min: 0.0
   s2_clip_max: 10000.0
   s1_db_min: -25.0
@@ -88,9 +90,14 @@ output:
 # 可视化设置
 vis:
   num_samples: 8
-  # Sentinel-2 波段顺序: B1,B2,B3,B4,B5,B6,B7,B8,B8A,B9,B10,B11,B12
-  # RGB 对应: B4(Red)=index3, B3(Green)=index2, B2(Blue)=index1
-  rgb_indices: [3, 2, 1]
+  # 选择 bands=[1,2,3] 时通道顺序为 B2,B3,B4
+  # RGB 对应: B4(Red)=index2, B3(Green)=index1, B2(Blue)=index0
+  rgb_indices: [2, 1, 0]
   steps: [50, 100, 500, 1000]
   auto_scale: true
   auto_scale_ref: "self"
+
+# 评估指标配置
+metrics:
+  cloud_thresh: 0.3
+  clear_thresh: 0.9

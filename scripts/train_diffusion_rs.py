@@ -125,9 +125,18 @@ def compute_time_weight(
     在 Residual Shifting 中，t 接近 T 时图像接近 y（有云），此时权重较小；
     t 接近 0 时图像接近 x0（清晰），此时权重较大。
     """
-    t_ratio = t.float() / timesteps
+    denom = max(timesteps - 1, 1)
+    t_ratio = t.float() / denom
     weight = max_weight - (max_weight - min_weight) * t_ratio
     return weight.view(-1, 1, 1, 1)
+
+
+def weighted_mean(loss: torch.Tensor, weight: torch.Tensor, eps: float = 1e-8) -> torch.Tensor:
+    """计算带权平均，支持广播权重。"""
+    if loss.shape != weight.shape:
+        weight = weight.expand_as(loss)
+    denom = weight.sum().clamp_min(eps)
+    return (loss * weight).sum() / denom
 
 
 def build_dataset(data_cfg: Dict):
@@ -262,7 +271,7 @@ def evaluate(
                 loss_recon_raw = F.l1_loss(x0_pred, x0, reduction="none")
                 grad_weight_map = torch.ones_like(x0[:, :1, :, :])
                 weight_map = grad_weight_map * aux_time_weight
-                loss_recon = (loss_recon_raw * aux_time_weight).mean()
+                loss_recon = weighted_mean(loss_recon_raw, aux_time_weight)
                 loss_grad = grad_l1_loss(x0_pred, x0, weight_map)
                 
                 recon_weight = cfg["loss"].get("recon_weight", 1.0)
@@ -792,7 +801,7 @@ def main() -> None:
                 loss_recon_raw = F.l1_loss(x0_pred, x0, reduction="none")
                 grad_weight_map = torch.ones_like(x0[:, :1, :, :])
                 weight_map = grad_weight_map * aux_time_weight
-                loss_recon = (loss_recon_raw * aux_time_weight).mean()
+                loss_recon = weighted_mean(loss_recon_raw, aux_time_weight)
                 loss_grad = grad_l1_loss(x0_pred, x0, weight_map)
 
                 recon_weight = cfg["loss"].get("recon_weight", 1.0)

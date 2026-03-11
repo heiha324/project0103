@@ -17,6 +17,14 @@ from torch import nn
 import torch.nn.functional as F
 
 
+def _valid_group_count(channels: int, max_groups: int = 32) -> int:
+    """Return the largest valid GroupNorm group count."""
+    groups = min(max_groups, channels)
+    while groups > 1 and channels % groups != 0:
+        groups -= 1
+    return max(groups, 1)
+
+
 class SinusoidalPosEmb(nn.Module):
     """正弦位置编码 (Sinusoidal Positional Embedding)。
     
@@ -57,8 +65,8 @@ class ResBlock(nn.Module):
         # 时间嵌入的投影层 (将 time_emb 映射到特征通道数)
         self.time_mlp = nn.Sequential(nn.SiLU(), nn.Linear(time_dim, out_ch))
         
-        self.norm1 = nn.GroupNorm(num_groups=min(32, in_ch), num_channels=in_ch)
-        self.norm2 = nn.GroupNorm(num_groups=min(32, out_ch), num_channels=out_ch)
+        self.norm1 = nn.GroupNorm(num_groups=_valid_group_count(in_ch), num_channels=in_ch)
+        self.norm2 = nn.GroupNorm(num_groups=_valid_group_count(out_ch), num_channels=out_ch)
         self.conv1 = nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1)
         
@@ -239,7 +247,7 @@ class ConditionalUNet(nn.Module):
             ch = out_ch
 
         # 6. 输出层
-        self.output_norm = nn.GroupNorm(num_groups=min(32, ch), num_channels=ch)
+        self.output_norm = nn.GroupNorm(num_groups=_valid_group_count(ch), num_channels=ch)
         self.output_conv = nn.Conv2d(ch, x_channels, kernel_size=3, padding=1)
 
     def forward(

@@ -19,6 +19,8 @@ from typing import List, Tuple
 import numpy as np
 import torch
 
+from sarcloud.diffusion.timesteps import make_time_sequence
+
 
 def make_eta_schedule(
     timesteps: int,
@@ -473,4 +475,4 @@ class ResidualShiftingDiffusion:
         Returns:
             List[int]: 时间步列表，从 T-1 递减到 0。
         """
-        return torch.linspace(self.timesteps - 1, 0, steps).long().tolist()
+        return make_time_sequence(self.timesteps - 1, 0, steps)
