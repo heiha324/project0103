@@ -1,0 +1,88 @@
+seed: 42
+
+diffusion:
+  timesteps: 1000
+  kappa: 1.0
+  schedule_type: "linear"
+  min_eta: 0.001
+  max_eta: 0.99
+  power: 2.0
+
+model:
+  x_channels: 3
+  y_channels: 3
+  s_channels: 2
+  embed_dim: 256
+  depth: 8
+  num_heads: 8
+  patch_size: 16
+  time_dim: 256
+  mlp_ratio: 4.0
+  dropout: 0.0
+  refine_channels: 128
+
+train:
+  batch_size: 32
+  num_epochs: 340
+  lr: 5.0e-5
+  weight_decay: 1.0e-4
+  ema_decay: 0.999
+  amp: true
+  grad_clip: 1.0
+  use_scheduler: true
+  warmup_epochs: 5
+
+loss:
+  recon_weight: 1.0
+  grad_weight: 0.5
+  aux_min_weight: 0.1
+  aux_max_weight: 1.0
+
+schedule:
+  x0_clip_min: 0.0
+  x0_clip_max: 1.0
+
+sampling:
+  steps: 50
+  method: "ddim"
+  eta: 0.0
+
+sen12ms:
+  dataset: "sen12mscr_raw"
+  root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
+  image_ext: ".tif"
+  bands: [1, 2, 3]
+  s2_clip_min: 0.0
+  s2_clip_max: 10000.0
+  s1_db_min: -25.0
+  s1_db_max: 0.0
+  split_csv: "supplementary_SEN12MSCR/outdated_train_val_test_patches.csv"
+  split: "train"
+
+test:
+  batch_size: 4
+  dataset: "sen12mscr_raw"
+  root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
+  image_ext: ".tif"
+  bands: [1, 2, 3]
+  s2_clip_min: 0.0
+  s2_clip_max: 10000.0
+  s1_db_min: -25.0
+  s1_db_max: 0.0
+  split_csv: "supplementary_SEN12MSCR/outdated_train_val_test_patches.csv"
+  split: "test"
+
+output:
+  dir: "/home/data/KXShen/model/project0103/diffusion_rs_transformer_sen12mscr_20260316_143711"
+  auto_timestamp: false
+
+vis:
+  num_samples: 4
+  rgb_indices: [2, 1, 0]
+  steps: [50, 100, 500, 1000]
+  auto_scale: true
+  auto_scale_ref: "self"
+
+metrics:
+  cloud_thresh: 0.3
+  clear_thresh: 0.9

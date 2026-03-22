@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import math
 import os
@@ -43,13 +44,8 @@ try:
 except Exception:
     tqdm = None
 
+# 训练阶段不直接渲染 PNG，可视化采样先保存为 NPY，再由离线脚本渲染。
 plt = None
-try:
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-except Exception:
-    plt = None
 
 # 项目模块 - 使用 Residual Shifting 扩散
 from sarcloud.data.sen12ms_cr import Sen12MSCRDataset, Sen12MSCRRawDataset, collate_sen12mscr
@@ -406,6 +402,7 @@ def to_rgb(
     return np.clip(rgb, 0.0, 1.0)
 
 
+
 def save_vis_samples(
     model: torch.nn.Module,
     diffusion: ResidualShiftingDiffusion,
@@ -420,13 +417,11 @@ def save_vis_samples(
     ema: EMA | None = None,
     use_ema: bool = False,
 ) -> None:
-    """生成可视化样本 (使用 Residual Shifting 采样)。"""
+    """生成可视化采样缓存 (保存为 NPY，PNG 由离线脚本渲染)。"""
     from sarcloud.utils.metrics import psnr, ssim, mae
 
     backup = None
     try:
-        if plt is None:
-            return
         if len(dataset) == 0:
             return
 
@@ -436,7 +431,7 @@ def save_vis_samples(
         vis_steps = vis_cfg.get("steps", [50])
         if isinstance(vis_steps, int):
             vis_steps = [vis_steps]
-            
+
         auto_scale = bool(vis_cfg.get("auto_scale", True))
         scale_percentiles = vis_cfg.get("scale_percentiles", [1.0, 99.0])
         auto_scale_ref = str(vis_cfg.get("auto_scale_ref", "clear")).lower()
@@ -444,7 +439,7 @@ def save_vis_samples(
         if not isinstance(scale_percentiles, (list, tuple)) or len(scale_percentiles) != 2:
             scale_percentiles = [1.0, 99.0]
         scale_percentiles = (float(scale_percentiles[0]), float(scale_percentiles[1]))
-        
+
         rng = random.Random(base_seed + epoch)
         sample_count = min(num_samples, len(dataset))
         indices = rng.sample(range(len(dataset)), k=sample_count)
@@ -460,113 +455,122 @@ def save_vis_samples(
             backup = apply_ema_weights(model, ema)
 
         sampling_cfg = cfg.get("sampling", {})
-        
-        # ===== 使用 Residual Shifting 采样 =====
-        preds_map = {}
+        vis_root = out_dir / "vis_npy"
+        vis_dir = vis_root / f"epoch_{epoch+1:03d}"
+        vis_dir.mkdir(parents=True, exist_ok=True)
+
+        s1_cpu = s1.cpu()
+        y_cpu = y.cpu()
+        x0_cpu = x0.cpu()
+
+        np.save(vis_dir / "sample_indices.npy", np.asarray(indices, dtype=np.int64))
+        np.save(vis_dir / "s1.npy", s1_cpu.numpy().astype(np.float32))
+        np.save(vis_dir / "cloudy.npy", y_cpu.numpy().astype(np.float32))
+        np.save(vis_dir / "clear.npy", x0_cpu.numpy().astype(np.float32))
+
+        metrics_map: dict[str, dict[str, float]] = {}
+        vis_meta = {
+            "epoch": epoch + 1,
+            "sample_count": sample_count,
+            "sample_indices": indices,
+            "rgb_indices": list(rgb_indices),
+            "vis_steps": [int(step) for step in vis_steps],
+            "auto_scale": auto_scale,
+            "scale_percentiles": [float(scale_percentiles[0]), float(scale_percentiles[1])],
+            "auto_scale_ref": auto_scale_ref,
+            "per_channel": per_channel,
+            "vis_gain": 5.0,
+            "sampling": {
+                "method": sampling_cfg.get("method", "ddim"),
+                "eta": float(sampling_cfg.get("eta", 0.0)),
+            },
+        }
+
         with torch.inference_mode():
             for step_cnt in vis_steps:
                 pred = sample_batch_rs(
-                    model, diffusion, y, s1,
+                    model,
+                    diffusion,
+                    y,
+                    s1,
                     steps=step_cnt,
                     schedule_cfg=sampling_cfg,
                 )
-                # 关键修复: 在存入 map 前直接截断
                 pred_cpu = torch.clamp(pred.cpu(), 0.0, 1.0)
-                
-                # 调试: 打印预测值的统计信息 (修复了变量名错误)
-                log_message(f"[Debug] Vis Prediction Stats (Step {step_cnt}): min={pred_cpu.min():.4f} max={pred_cpu.max():.4f} mean={pred_cpu.mean():.4f}", logger, console=True, use_tqdm=use_tqdm)
 
-                preds_map[step_cnt] = pred_cpu.numpy()
-                
-                x0_cpu = x0.cpu()
-                # pred_clipped = torch.clamp(pred_cpu, 0.0, 1.0) # 已在上一步截断
-                pred_clipped = pred_cpu
-                
-                val_psnr = psnr(pred_clipped, x0_cpu)
-                val_ssim = ssim(pred_clipped, x0_cpu)
-                val_mae = mae(pred_clipped, x0_cpu)
-                
+                log_message(
+                    f"[Debug] Vis Prediction Stats (Step {step_cnt}): "
+                    f"min={pred_cpu.min():.4f} max={pred_cpu.max():.4f} mean={pred_cpu.mean():.4f}",
+                    logger,
+                    console=True,
+                    use_tqdm=use_tqdm,
+                )
+
+                np.save(vis_dir / f"step_{int(step_cnt):04d}.npy", pred_cpu.numpy().astype(np.float32))
+
+                val_psnr = psnr(pred_cpu, x0_cpu)
+                val_ssim = ssim(pred_cpu, x0_cpu)
+                val_mae = mae(pred_cpu, x0_cpu)
+                metrics_map[str(int(step_cnt))] = {
+                    "psnr": float(val_psnr),
+                    "ssim": float(val_ssim),
+                    "mae": float(val_mae),
+                }
+
                 log_message(
                     f"[Vis] Step {step_cnt}: PSNR {val_psnr:.2f} SSIM {val_ssim:.4f} MAE {val_mae:.4f}",
-                    logger, console=True, use_tqdm=use_tqdm
+                    logger,
+                    console=True,
+                    use_tqdm=use_tqdm,
                 )
 
-        # 可视化增益：将图像亮度放大 5 倍以提高可见度 (应对数据本身偏暗的问题)
-        vis_gain = 5.0
-        y_np = np.clip(y.cpu().numpy() * vis_gain, 0.0, 1.0)
-        x0_np = np.clip(x0.cpu().numpy() * vis_gain, 0.0, 1.0)
-        
-        cols = 2 + len(vis_steps)
-        fig, axes = plt.subplots(sample_count, cols, figsize=(cols * 3, sample_count * 3), squeeze=False)
-        
-        for row, idx in enumerate(indices):
-            scale_params = None
-            if auto_scale and auto_scale_ref != "self":
-                if auto_scale_ref == "cloudy":
-                    ref_rgb = to_rgb(y_np[row], rgb_indices)
-                else:
-                    ref_rgb = to_rgb(x0_np[row], rgb_indices)
-                
-                if per_channel:
-                    scale_params = _compute_channel_percentiles(
-                        ref_rgb, scale_percentiles[0], scale_percentiles[1]
-                    )
-                else:
-                    lo, hi = np.percentile(ref_rgb, [scale_percentiles[0], scale_percentiles[1]])
-                    scale_params = (np.array([lo, lo, lo]), np.array([hi, hi, hi]))
+        (vis_dir / "meta.json").write_text(
+            json.dumps(vis_meta, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+        (vis_dir / "metrics.json").write_text(
+            json.dumps(metrics_map, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+        (vis_root / "latest_epoch.txt").write_text(f"{epoch+1:03d}\n", encoding="utf-8")
 
-            cloudy_rgb = to_rgb(
-                y_np[row], rgb_indices, 
-                auto_scale=auto_scale and auto_scale_ref=="self", 
-                scale_params=scale_params, per_channel=per_channel
-            )
-            axes[row, 0].imshow(cloudy_rgb)
-            axes[row, 0].set_title(f"Cloudy ({idx})", fontsize=8)
-            axes[row, 0].axis("off")
-            
-            for i, step_cnt in enumerate(vis_steps):
-                pred_np = preds_map[step_cnt][row]
-                # 对预测结果应用增益以进行可视化
-                pred_np = np.clip(pred_np * vis_gain, 0.0, 1.0)
-                
-                pred_out_ratio = float(((pred_np < 0.0) | (pred_np > 1.0)).mean() * 100.0)
-                pred_use_self = auto_scale and (auto_scale_ref == "self" or pred_out_ratio > 5.0)
-                
-                pred_rgb = to_rgb(
-                    pred_np, rgb_indices,
-                    auto_scale=pred_use_self,
-                    scale_params=None if pred_use_self else scale_params,
-                    per_channel=per_channel
-                )
-                axes[row, i + 1].imshow(pred_rgb)
-                axes[row, i + 1].set_title(f"Step {step_cnt}", fontsize=8)
-                axes[row, i + 1].axis("off")
-                
-            clear_rgb = to_rgb(
-                x0_np[row], rgb_indices,
-                auto_scale=auto_scale and auto_scale_ref=="self",
-                scale_params=scale_params, per_channel=per_channel
-            )
-            axes[row, -1].imshow(clear_rgb)
-            axes[row, -1].set_title("Clear", fontsize=8)
-            axes[row, -1].axis("off")
+        log_message(
+            f"Saved Residual Shifting visualization arrays to {vis_dir}",
+            logger,
+            console=True,
+            use_tqdm=use_tqdm,
+        )
 
-        plt.tight_layout()
-        vis_dir = out_dir / "vis"
-        vis_dir.mkdir(parents=True, exist_ok=True)
-        epoch_path = vis_dir / f"diffusion_rs_vis_epoch_{epoch+1:03d}.png"
-        fig.savefig(epoch_path, dpi=150)
-        fig.savefig(vis_dir / "diffusion_rs_vis.png", dpi=150)
-        plt.close(fig)
-        log_message(f"Saved Residual Shifting visualization to {epoch_path}", logger, console=True, use_tqdm=use_tqdm)
+        try:
+            from render_vis_samples import render_epoch
+
+            vis_png_dir = out_dir / "vis"
+            png_path = render_epoch(
+                vis_dir,
+                vis_png_dir,
+                output_name=f"diffusion_rs_vis_epoch_{epoch+1:03d}.png",
+                latest_name="diffusion_rs_vis.png",
+            )
+            log_message(
+                f"Saved Residual Shifting visualization to {png_path}",
+                logger,
+                console=True,
+                use_tqdm=use_tqdm,
+            )
+        except Exception as exc:
+            log_message(
+                f"Visualization render failed: {exc}",
+                logger,
+                console=True,
+                use_tqdm=use_tqdm,
+            )
     except Exception as exc:
-        log_message(f"Visualization failed: {exc}", logger, console=True, use_tqdm=use_tqdm)
+        log_message(f"Visualization cache export failed: {exc}", logger, console=True, use_tqdm=use_tqdm)
         import traceback
         traceback.print_exc()
     finally:
         if backup is not None:
             restore_weights(model, backup)
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train Residual Shifting Diffusion Model")

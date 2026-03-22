@@ -4,6 +4,7 @@
 - WHU/WHU_Ori 云检测数据集训练 RS-Net
 - 生成 alpha 缓存
 - SAR 引导扩散模型训练与采样
+- Transformer 主干的 Residual Shifting 扩散训练
 - 区域化评估
 
 该实现基于 `sar_cloud_removal_full_plan.md` 的方案落地。
@@ -83,6 +84,17 @@ python scripts/train_diffusion.py --config configs/diffusion.yaml
 python scripts/train_diffusion_rs.py --config configs/diffusion_rs.yaml
 ```
 
+#### 方案 C: Residual Shifting + Conditional Transformer（新增）
+```bash
+python scripts/train_diffusion_rs_transformer.py --config configs/diffusion_rs_transformer.yaml
+```
+
+说明：
+- 不会替换原有 U-Net 方案，训练脚本、配置和输出目录都是独立的。
+- 保留当前 Residual Shifting 扩散过程、loss、EMA、评估和可视化流程。
+- 去噪主干由 `ConditionalUNet` 改为 patch-based `ConditionalTransformer`。
+- 默认配置比 U-Net 更吃显存，`configs/diffusion_rs_transformer.yaml` 已将 `batch_size` 调低到 8。
+
 > **为什么推荐 Residual Shifting?**
 >
 > 标准 DDPM 的采样起点是纯高斯噪声，模型需要从零开始"生成"清晰图像。
@@ -100,6 +112,11 @@ python scripts/sample_diffusion.py --config configs/diffusion.yaml
 
 # Residual Shifting (采样脚本与训练脚本集成)
 # 训练脚本会在每个 epoch 结束时自动进行采样可视化
+
+# Residual Shifting + Transformer
+python scripts/sample_diffusion_rs_transformer.py \
+  --config configs/diffusion_rs_transformer.yaml \
+  --checkpoint /path/to/diffusion_rs_transformer_best.pth
 
 # 区域评估
 python scripts/eval_regions.py --config configs/eval.yaml
@@ -122,6 +139,14 @@ python scripts/eval_regions.py --config configs/eval.yaml
 - `sampling.steps`: 采样步数 (DDIM 可用较少步数，如 50)
 - `sampling.method`: 采样方法 (`ddpm`/`ddim`)
 - `sampling.eta`: DDIM 随机性系数 (0.0 为确定性)
+
+### Transformer 扩散配置 (`configs/diffusion_rs_transformer.yaml`)
+- `model.embed_dim`: Transformer token 维度
+- `model.depth`: Transformer block 层数
+- `model.num_heads`: 多头注意力头数
+- `model.patch_size`: patch 大小（输入高宽需能被 patch size 整除，代码会自动 pad）
+- `model.refine_channels`: 输出端局部卷积细化通道数
+- `train.batch_size`: 建议从较小值开始，Transformer 显存占用明显高于当前 U-Net
 
 ## 常见问题
 ### 1. DDP 卡在验证/epoch 切换

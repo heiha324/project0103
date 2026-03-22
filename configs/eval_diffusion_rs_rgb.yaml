@@ -1,0 +1,22 @@
+seed: 42
+
+sen12ms:
+  dataset: "sen12mscr_raw"
+  root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
+  alpha_root: "/home/data/KXShen/model/project0103/alpha_cache_sen12mscr_raw"
+  split_csv: "supplementary_SEN12MSCR/outdated_train_val_test_patches.csv"
+  split: "test"
+  alpha_ext: ".npy"
+  image_ext: ".tif"
+  bands: [1, 2, 3]
+  s2_clip_min: 0.0
+  s2_clip_max: 10000.0
+  s1_db_min: -25.0
+  s1_db_max: 0.0
+
+metrics:
+  cloud_thresh: 0.3
+  clear_thresh: 0.9
+
+output:
+  dir: "eval/diffusion_rs_rgb"

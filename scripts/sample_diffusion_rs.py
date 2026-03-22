@@ -52,7 +52,12 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default="configs/diffusion_rs.yaml")
     parser.add_argument("--checkpoint", type=str, required=True)
-    parser.add_argument("--output", type=str, default="outputs/diffusion_rs/samples")
+    parser.add_argument(
+        "--output",
+        type=str,
+        default=None,
+        help="采样输出目录；未指定时默认保存到 checkpoint 同目录下的 step 专属子目录",
+    )
     parser.add_argument("--subset_size", type=int, default=0, help="仅采样前N个样本(调试用)")
     # 覆盖配置文件的参数
     parser.add_argument("--steps", type=int, default=None)
@@ -145,13 +150,32 @@ def main() -> None:
             s1_db_max=data_cfg.get("s1_db_max", 0.0),
         )
 
-    output_dir = Path(args.output)
+    # Sampling Config
+    sampling_cfg = cfg.get("sampling", {}).copy()
+    if args.steps is not None:
+        sampling_cfg["steps"] = args.steps
+    if args.eta is not None:
+        sampling_cfg["eta"] = args.eta
+        
+    steps = sampling_cfg.get("steps", 50)
+
+    if args.output is not None:
+        output_dir = Path(args.output)
+    else:
+        ckpt_path = Path(args.checkpoint).resolve()
+        ckpt_stem = ckpt_path.stem
+        if ckpt_stem.startswith("diffusion_rs_"):
+            ckpt_stem = ckpt_stem[len("diffusion_rs_"):]
+        output_dir = ckpt_path.parent / f"samples_{ckpt_stem}_step{steps}"
+
     if is_distributed:
         if rank == 0:
             output_dir.mkdir(parents=True, exist_ok=True)
+            print(f"Saving samples to {output_dir}")
         dist.barrier()
     else:
         output_dir.mkdir(parents=True, exist_ok=True)
+        print(f"Saving samples to {output_dir}")
 
     # --- Slice Indices ---
     total_len = len(dataset)
@@ -171,15 +195,6 @@ def main() -> None:
         indices_iter = tqdm(indices, desc="Sample", ncols=80)
     else:
         indices_iter = indices
-    
-    # Sampling Config
-    sampling_cfg = cfg.get("sampling", {}).copy()
-    if args.steps is not None:
-        sampling_cfg["steps"] = args.steps
-    if args.eta is not None:
-        sampling_cfg["eta"] = args.eta
-        
-    steps = sampling_cfg.get("steps", 50)
     
     for idx in indices_iter:
         s1, s2_cloudy, s2_clear, _alpha = dataset[idx]
