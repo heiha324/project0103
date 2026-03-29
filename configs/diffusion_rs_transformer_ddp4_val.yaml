@@ -22,12 +22,12 @@ model:
   refine_channels: 128
 
 train:
-  batch_size: 16
-  num_epochs: 1000
+  batch_size: 32
+  num_epochs: 500
   lr: 5.0e-5
   weight_decay: 1.0e-4
   ema_decay: 0.999
-  amp: false
+  amp: true
   grad_clip: 1.0
   use_scheduler: true
   warmup_epochs: 5
@@ -60,6 +60,7 @@ sen12ms:
   split: "train"
 
 test:
+  batch_size: 4
   dataset: "sen12mscr_raw"
   root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
   image_ext: ".tif"
@@ -69,14 +70,15 @@ test:
   s1_db_min: -25.0
   s1_db_max: 0.0
   split_csv: "supplementary_SEN12MSCR/outdated_train_val_test_patches.csv"
-  split: "test"
+  split: "val"
 
 output:
-  dir: "/home/data/KXShen/model/project0103/diffusion_rs_transformer_sen12mscr"
+  dir: "/home/data/KXShen/model/project0103/diffusion_rs_transformer_sen12mscr_20260316_143711"
   keep_last_epoch_checkpoints: 20
+  auto_timestamp: false
 
 vis:
-  num_samples: 8
+  num_samples: 4
   rgb_indices: [2, 1, 0]
   steps: [50, 100, 500, 1000]
   auto_scale: true

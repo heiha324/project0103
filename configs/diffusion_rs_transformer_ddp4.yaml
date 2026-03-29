@@ -23,7 +23,7 @@ model:
 
 train:
   batch_size: 32
-  num_epochs: 340
+  num_epochs: 500
   lr: 5.0e-5
   weight_decay: 1.0e-4
   ema_decay: 0.999
@@ -74,6 +74,7 @@ test:
 
 output:
   dir: "/home/data/KXShen/model/project0103/diffusion_rs_transformer_sen12mscr_20260316_143711"
+  keep_last_epoch_checkpoints: 20
   auto_timestamp: false
 
 vis:

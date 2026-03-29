@@ -223,6 +223,7 @@ def main() -> None:
                 print(f"Advanced scheduler by {start_epoch} epochs to match resumed training")
 
     output_cfg = cfg.get("output", {})
+    keep_last_epoch_checkpoints = max(1, int(output_cfg.get("keep_last_epoch_checkpoints", 20)))
     out_dir = Path(output_cfg["dir"])
     fmt = output_cfg.get("timestamp_format", "%Y%m%d_%H%M%S")
     run_ts = time.strftime(fmt) if is_main else ""
@@ -470,8 +471,14 @@ def main() -> None:
             }
             torch.save(checkpoint, out_dir / "diffusion_rs_transformer_last.pth")
             torch.save({"ema_state": ema.shadow}, out_dir / "diffusion_rs_transformer_ema.pth")
+            epoch_ckpt_path = out_dir / f"diffusion_rs_transformer_epoch_{epoch+1:04d}.pth"
+            torch.save(checkpoint, epoch_ckpt_path)
+            epoch_ckpt_paths = sorted(out_dir.glob("diffusion_rs_transformer_epoch_*.pth"))
+            if len(epoch_ckpt_paths) > keep_last_epoch_checkpoints:
+                for stale_ckpt in epoch_ckpt_paths[:-keep_last_epoch_checkpoints]:
+                    stale_ckpt.unlink(missing_ok=True)
             base.log_message(
-                f"Epoch {epoch+1}/{num_epochs} - checkpoints saved",
+                f"Epoch {epoch+1}/{num_epochs} - checkpoints saved (rolling {keep_last_epoch_checkpoints})",
                 logger,
                 console=True,
                 use_tqdm=True,
