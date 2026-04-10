@@ -58,8 +58,8 @@ class Sen12MSCRDataset(Dataset):
         alpha_subdir: Optional[str] = None,
         image_ext: str = ".npy",
         bands: Optional[Sequence[int]] = None,
-        s2_clip_min: float = 0.0,
-        s2_clip_max: float = 10000.0,
+        s2_clip_min: float | Sequence[float] = 0.0,
+        s2_clip_max: float | Sequence[float] = 10000.0,
         s1_db_min: float = -25.0,
         s1_db_max: float = 0.0,
     ) -> None:
@@ -73,8 +73,8 @@ class Sen12MSCRDataset(Dataset):
             alpha_subdir: Alpha 掩码子目录名 (可选)。
             image_ext: 图像扩展名 (默认 ".npy")。
             bands: 需要选择的波段索引列表 (例如 [1, 2, 3] 对应 RGB)。
-            s2_clip_min: Sentinel-2 归一化最小值 (通常为 0)。
-            s2_clip_max: Sentinel-2 归一化最大值 (通常为 10000)。
+            s2_clip_min: Sentinel-2 归一化最小值，可为标量或逐波段序列。
+            s2_clip_max: Sentinel-2 归一化最大值，可为标量或逐波段序列。
             s1_db_min: Sentinel-1 dB 值截断下限。
             s1_db_max: Sentinel-1 dB 值截断上限。
         """
@@ -221,8 +221,8 @@ class Sen12MSCRRawDataset(Dataset):
         split_csv: Optional[str | Path] = None,
         split: Optional[str] = None,
         bands: Optional[Sequence[int]] = None,
-        s2_clip_min: float = 0.0,
-        s2_clip_max: float = 10000.0,
+        s2_clip_min: float | Sequence[float] = 0.0,
+        s2_clip_max: float | Sequence[float] = 10000.0,
         s1_db_min: float = -25.0,
         s1_db_max: float = 0.0,
         alpha_ext: str = ".npy",
@@ -235,7 +235,7 @@ class Sen12MSCRRawDataset(Dataset):
             split_csv: 包含数据集划分信息的 CSV 文件路径。
             split: 要加载的划分 (例如 "train", "test")，需要与 CSV 中的列匹配。
             bands: 波段选择。
-            s2_clip_min, s2_clip_max: S2 归一化范围。
+            s2_clip_min, s2_clip_max: S2 归一化范围，可为标量或逐波段序列。
             s1_db_min, s1_db_max: S1 归一化范围。
             alpha_ext: Alpha 文件扩展名。
             roi_glob: 用于过滤 ROI 的 Glob 模式 (调试用)。

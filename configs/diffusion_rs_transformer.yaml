@@ -9,8 +9,8 @@ diffusion:
   power: 2.0
 
 model:
-  x_channels: 3
-  y_channels: 3
+  x_channels: 13
+  y_channels: 13
   s_channels: 2
   embed_dim: 256
   depth: 8
@@ -51,7 +51,7 @@ sen12ms:
   dataset: "sen12mscr_raw"
   root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
   image_ext: ".tif"
-  bands: [1, 2, 3]
+  bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
   s2_clip_min: 0.0
   s2_clip_max: 10000.0
   s1_db_min: -25.0
@@ -63,7 +63,7 @@ test:
   dataset: "sen12mscr_raw"
   root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
   image_ext: ".tif"
-  bands: [1, 2, 3]
+  bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
   s2_clip_min: 0.0
   s2_clip_max: 10000.0
   s1_db_min: -25.0
@@ -72,13 +72,15 @@ test:
   split: "test"
 
 output:
+  save_every_epochs: 20
+  psnr_eval_steps: [5, 10, 20]
+  psnr_eval_max_batches: 0
   dir: "/home/data/KXShen/model/project0103/diffusion_rs_transformer_sen12mscr"
-  keep_last_epoch_checkpoints: 20
 
 vis:
   num_samples: 8
   rgb_indices: [2, 1, 0]
-  steps: [50, 100, 500, 1000]
+  steps: [5, 10, 20, 50, 100]
   auto_scale: true
   auto_scale_ref: "self"
 

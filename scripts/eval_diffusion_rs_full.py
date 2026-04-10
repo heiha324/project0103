@@ -160,7 +160,7 @@ def evaluate(
         "uiqi": 0.0,
         "rase": 0.0,
     }
-    steps = 0
+    sample_count = 0
 
     iterator = loader
     if tqdm is not None and (not ddp or rank == 0):
@@ -183,36 +183,37 @@ def evaluate(
                 )
             x0_pred = x0_pred.clamp(0.0, 1.0).float()
             x0 = x0.float()
+            batch_size = int(x0.size(0))
 
-            totals["mae"] += mae(x0_pred, x0)
-            totals["mse"] += mse(x0_pred, x0)
-            totals["rmse"] += rmse(x0_pred, x0)
-            totals["nrmse"] += nrmse(x0_pred, x0)
-            totals["psnr"] += psnr(x0_pred, x0)
-            totals["ssim"] += ssim(x0_pred, x0)
-            totals["ms_ssim"] += ms_ssim(x0_pred, x0)
-            totals["sam"] += sam(x0_pred, x0)
-            totals["ergas"] += ergas(x0_pred, x0)
-            totals["cc"] += cc(x0_pred, x0)
-            totals["uiqi"] += uiqi(x0_pred, x0)
-            totals["rase"] += rase(x0_pred, x0)
-            steps += 1
+            totals["mae"] += mae(x0_pred, x0) * batch_size
+            totals["mse"] += mse(x0_pred, x0) * batch_size
+            totals["rmse"] += rmse(x0_pred, x0) * batch_size
+            totals["nrmse"] += nrmse(x0_pred, x0) * batch_size
+            totals["psnr"] += psnr(x0_pred, x0) * batch_size
+            totals["ssim"] += ssim(x0_pred, x0) * batch_size
+            totals["ms_ssim"] += ms_ssim(x0_pred, x0) * batch_size
+            totals["sam"] += sam(x0_pred, x0) * batch_size
+            totals["ergas"] += ergas(x0_pred, x0) * batch_size
+            totals["cc"] += cc(x0_pred, x0) * batch_size
+            totals["uiqi"] += uiqi(x0_pred, x0) * batch_size
+            totals["rase"] += rase(x0_pred, x0) * batch_size
+            sample_count += batch_size
 
     if ddp:
-        values = [totals[k] for k in totals] + [float(steps)]
+        values = [totals[k] for k in totals] + [float(sample_count)]
         metrics_tensor = torch.tensor(values, device=device)
         dist.all_reduce(metrics_tensor, op=dist.ReduceOp.SUM)
-        total_steps = int(metrics_tensor[-1].item())
-        if total_steps == 0:
+        total_samples = int(metrics_tensor[-1].item())
+        if total_samples == 0:
             return {key: float("nan") for key in totals}
         return {
-            key: metrics_tensor[idx].item() / total_steps
+            key: metrics_tensor[idx].item() / total_samples
             for idx, key in enumerate(totals.keys())
         }
 
-    if steps == 0:
+    if sample_count == 0:
         return {key: float("nan") for key in totals}
-    return {key: value / steps for key, value in totals.items()}
+    return {key: value / sample_count for key, value in totals.items()}
 
 
 def main() -> None:

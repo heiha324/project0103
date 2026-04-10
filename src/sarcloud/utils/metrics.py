@@ -10,6 +10,20 @@ import torch
 import torch.nn.functional as F
 
 
+def _ensure_4d_pair(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    if pred.shape != target.shape:
+        raise ValueError(f"pred/target shape mismatch: {tuple(pred.shape)} vs {tuple(target.shape)}")
+    if pred.ndim == 3:
+        pred = pred.unsqueeze(0)
+        target = target.unsqueeze(0)
+    if pred.ndim != 4:
+        raise ValueError(f"Expected CHW or BCHW tensors, got shape {tuple(pred.shape)}")
+    return pred, target
+
+
 def dice_loss(probs: torch.Tensor, targets: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
     probs = probs.contiguous().view(probs.size(0), -1)
     targets = targets.contiguous().view(targets.size(0), -1)
@@ -73,40 +87,61 @@ def f1_score(preds: torch.Tensor, targets: torch.Tensor, threshold: float = 0.5)
 
 
 def psnr(pred: torch.Tensor, target: torch.Tensor, eps: float = 1e-8) -> float:
-    mse_val = F.mse_loss(pred, target).item()
-    if mse_val < eps:
-        return 100.0
-    return float(20 * math.log10(1.0) - 10 * math.log10(mse_val))
+    pred, target = _ensure_4d_pair(pred, target)
+    mse_vals = F.mse_loss(pred, target, reduction="none").view(pred.size(0), -1).mean(dim=1)
+    psnr_vals = torch.where(
+        mse_vals < eps,
+        torch.full_like(mse_vals, 100.0),
+        -10.0 * torch.log10(mse_vals.clamp_min(eps)),
+    )
+    return float(psnr_vals.mean().item())
 
 
 def mae(pred: torch.Tensor, target: torch.Tensor) -> float:
-    return float(F.l1_loss(pred, target).item())
+    pred, target = _ensure_4d_pair(pred, target)
+    mae_vals = F.l1_loss(pred, target, reduction="none").view(pred.size(0), -1).mean(dim=1)
+    return float(mae_vals.mean().item())
 
 
 def mse(pred: torch.Tensor, target: torch.Tensor) -> float:
-    return float(F.mse_loss(pred, target).item())
+    pred, target = _ensure_4d_pair(pred, target)
+    mse_vals = F.mse_loss(pred, target, reduction="none").view(pred.size(0), -1).mean(dim=1)
+    return float(mse_vals.mean().item())
 
 
 def rmse(pred: torch.Tensor, target: torch.Tensor) -> float:
-    return float(math.sqrt(F.mse_loss(pred, target).item()))
+    pred, target = _ensure_4d_pair(pred, target)
+    mse_vals = F.mse_loss(pred, target, reduction="none").view(pred.size(0), -1).mean(dim=1)
+    rmse_vals = torch.sqrt(mse_vals)
+    return float(rmse_vals.mean().item())
 
 
 def nrmse(pred: torch.Tensor, target: torch.Tensor) -> float:
     """Normalized RMSE (RMSE / (max - min))."""
-    rmse_val = rmse(pred, target)
-    val_range = float(target.max() - target.min())
-    if val_range == 0:
-        return 0.0
-    return rmse_val / (val_range + 1e-8)
+    pred, target = _ensure_4d_pair(pred, target)
+    mse_vals = F.mse_loss(pred, target, reduction="none").view(pred.size(0), -1).mean(dim=1)
+    rmse_vals = torch.sqrt(mse_vals)
+    target_flat = target.view(target.size(0), -1)
+    val_ranges = target_flat.max(dim=1).values - target_flat.min(dim=1).values
+    nrmse_vals = torch.where(
+        val_ranges == 0,
+        torch.zeros_like(rmse_vals),
+        rmse_vals / (val_ranges + 1e-8),
+    )
+    return float(nrmse_vals.mean().item())
 
 
 def cc(pred: torch.Tensor, target: torch.Tensor) -> float:
-    """Pearson Correlation Coefficient (global)."""
-    vx = pred - pred.mean()
-    vy = target - target.mean()
-    cost = torch.sum(vx * vy)
-    norm = torch.sqrt(torch.sum(vx ** 2)) * torch.sqrt(torch.sum(vy ** 2))
-    return float((cost / (norm + 1e-8)).item())
+    """Pearson Correlation Coefficient (per-image mean)."""
+    pred, target = _ensure_4d_pair(pred, target)
+    pred_flat = pred.view(pred.size(0), -1)
+    target_flat = target.view(target.size(0), -1)
+    vx = pred_flat - pred_flat.mean(dim=1, keepdim=True)
+    vy = target_flat - target_flat.mean(dim=1, keepdim=True)
+    cost = (vx * vy).sum(dim=1)
+    norm = torch.sqrt((vx ** 2).sum(dim=1)) * torch.sqrt((vy ** 2).sum(dim=1))
+    cc_vals = cost / (norm + 1e-8)
+    return float(cc_vals.mean().item())
 
 
 def sam(pred: torch.Tensor, target: torch.Tensor) -> float:
@@ -214,15 +249,17 @@ def _ssim(
 
 
 def ssim(img1: torch.Tensor, img2: torch.Tensor, window_size: int = 11, size_average: bool = True) -> float:
-    if img1.ndim == 3:
-        img1 = img1.unsqueeze(0)
-        img2 = img2.unsqueeze(0)
+    img1, img2 = _ensure_4d_pair(img1, img2)
     
     channel = img1.size(1)
     window = _create_window(window_size, channel).to(img1.device).type_as(img1)
     
-    s_val, _ = _ssim(img1, img2, window, window_size, channel, size_average)
-    return float(s_val.item())
+    s_val, _ = _ssim(img1, img2, window, window_size, channel, size_average=False)
+    if size_average:
+        return float(s_val.mean().item())
+    if s_val.numel() == 1:
+        return float(s_val.item())
+    return float(s_val.mean().item())
 
 
 def ms_ssim(
@@ -294,9 +331,7 @@ def ms_ssim(
 
 def uiqi(pred: torch.Tensor, target: torch.Tensor, window_size: int = 8) -> float:
     """Universal Image Quality Index."""
-    if pred.ndim == 3:
-        pred = pred.unsqueeze(0)
-        target = target.unsqueeze(0)
+    pred, target = _ensure_4d_pair(pred, target)
         
     channel = pred.size(1)
     window = _create_window(window_size, channel).to(pred.device).type_as(pred)
@@ -311,5 +346,5 @@ def uiqi(pred: torch.Tensor, target: torch.Tensor, window_size: int = 8) -> floa
     # But usually in image data it's fine or we can add small epsilon to the implementation.
     # Let's rely on the epsilon I should add to _ssim.
     
-    val, _ = _ssim(pred, target, window, window_size, channel, size_average=True, uqi_mode=True)
-    return float(val.item())
+    val, _ = _ssim(pred, target, window, window_size, channel, size_average=False, uqi_mode=True)
+    return float(val.mean().item())

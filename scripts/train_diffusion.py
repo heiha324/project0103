@@ -54,6 +54,7 @@ from sarcloud.diffusion.losses import grad_l1_loss
 from sarcloud.diffusion.sampling import sample_batch
 from sarcloud.models.cond_unet import ConditionalUNet
 from sarcloud.training.ema import EMA
+from sarcloud.training.samplers import DistributedEvalSamplerNoPad
 from sarcloud.utils.config import load_config
 from sarcloud.utils.metrics import (
     mae, mse, rmse, nrmse, psnr, ssim, ms_ssim, sam, ergas, cc, uiqi, rase
@@ -261,6 +262,7 @@ def evaluate(
         "ergas": 0.0, "cc": 0.0, "uiqi": 0.0, "rase": 0.0,
     }
     steps = 0
+    sample_count = 0
     
     # 仅在主进程显示进度条
     show_progress = use_tqdm and (not ddp or dist.get_rank() == 0)
@@ -318,6 +320,7 @@ def evaluate(
                 # 计算详细指标
                 x0_p = x0_pred.detach().float()
                 x0_t = x0.detach().float()
+                batch_size = int(x0_p.size(0))
                 m_mae = mae(x0_p, x0_t)
                 m_mse = mse(x0_p, x0_t)
                 m_rmse = rmse(x0_p, x0_t)
@@ -335,20 +338,21 @@ def evaluate(
             totals["diff"] += float(loss_diff.item())
             totals["recon"] += float(loss_recon.item())
             totals["grad"] += float(loss_grad.item())
-            totals["mae"] += m_mae
-            totals["mse"] += m_mse
-            totals["rmse"] += m_rmse
-            totals["nrmse"] += m_nrmse
-            totals["psnr"] += m_psnr
-            totals["ssim"] += m_ssim
-            totals["ms_ssim"] += m_ms_ssim
-            totals["sam"] += m_sam
-            totals["ergas"] += m_ergas
-            totals["cc"] += m_cc
-            totals["uiqi"] += m_uiqi
-            totals["rase"] += m_rase
+            totals["mae"] += m_mae * batch_size
+            totals["mse"] += m_mse * batch_size
+            totals["rmse"] += m_rmse * batch_size
+            totals["nrmse"] += m_nrmse * batch_size
+            totals["psnr"] += m_psnr * batch_size
+            totals["ssim"] += m_ssim * batch_size
+            totals["ms_ssim"] += m_ms_ssim * batch_size
+            totals["sam"] += m_sam * batch_size
+            totals["ergas"] += m_ergas * batch_size
+            totals["cc"] += m_cc * batch_size
+            totals["uiqi"] += m_uiqi * batch_size
+            totals["rase"] += m_rase * batch_size
             
             steps += 1
+            sample_count += batch_size
     
     # 评估结束，恢复训练权重
     if backup is not None:
@@ -363,28 +367,33 @@ def evaluate(
             totals["mae"], totals["mse"], totals["rmse"], totals["nrmse"],
             totals["psnr"], totals["ssim"], totals["ms_ssim"], totals["sam"],
             totals["ergas"], totals["cc"], totals["uiqi"], totals["rase"],
-            float(steps)
+            float(steps), float(sample_count)
         ]
         metrics_tensor = torch.tensor(vals, device=device)
         
         # 全局求和
         dist.all_reduce(metrics_tensor, op=dist.ReduceOp.SUM)
         
-        total_steps = metrics_tensor[-1].item()
-        if total_steps == 0:
+        total_steps = metrics_tensor[-2].item()
+        total_samples = metrics_tensor[-1].item()
+        if total_steps == 0 or total_samples == 0:
              return {k: float("nan") for k in totals}
              
         res = {}
         keys = list(totals.keys()) # keys are in insertion order (Py3.7+)
         # totals insertion order: loss, diff, recon, grad, mae... rase
         # The first 16 elements of metrics_tensor correspond to these keys
-        for i, k in enumerate(keys):
+        for i, k in enumerate(keys[:4]):
             res[k] = metrics_tensor[i].item() / total_steps
+        for i, k in enumerate(keys[4:], start=4):
+            res[k] = metrics_tensor[i].item() / total_samples
         return res
 
-    if steps == 0:
+    if steps == 0 or sample_count == 0:
         return {k: float("nan") for k in totals}
-    return {k: v / steps for k, v in totals.items()}
+    out = {k: totals[k] / steps for k in ("loss", "diff", "recon", "grad")}
+    out.update({k: totals[k] / sample_count for k in list(totals.keys())[4:]})
+    return out
 
 
 def summarize_array(name: str, arr: np.ndarray) -> str:
@@ -689,7 +698,7 @@ def main() -> None:
     eval_sampler = None
     if ddp:
         # 评估时通常 shuffle=False
-        eval_sampler = DistributedSampler(eval_dataset, num_replicas=world_size, rank=rank, shuffle=False)
+        eval_sampler = DistributedEvalSamplerNoPad(eval_dataset, num_replicas=world_size, rank=rank)
         
     eval_loader = build_loader(
         eval_dataset,

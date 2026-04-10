@@ -54,10 +54,30 @@ from sarcloud.diffusion.losses import grad_l1_loss
 from sarcloud.diffusion.sampling_rs import sample_batch_rs
 from sarcloud.models.cond_unet import ConditionalUNet
 from sarcloud.training.ema import EMA
+from sarcloud.training.samplers import DistributedEvalSamplerNoPad
 from sarcloud.utils.config import load_config
 from sarcloud.utils.metrics import (
     mae, mse, rmse, nrmse, psnr, ssim, ms_ssim, sam, ergas, cc, uiqi, rase
 )
+
+
+METRIC_PROTOCOL = "image_mean_v1"
+LOSS_KEYS = ("loss", "diff", "recon", "grad")
+IMAGE_METRIC_FNS = {
+    "mae": mae,
+    "mse": mse,
+    "rmse": rmse,
+    "nrmse": nrmse,
+    "psnr": psnr,
+    "ssim": ssim,
+    "ms_ssim": ms_ssim,
+    "sam": sam,
+    "ergas": ergas,
+    "cc": cc,
+    "uiqi": uiqi,
+    "rase": rase,
+}
+IMAGE_METRIC_KEYS = tuple(IMAGE_METRIC_FNS.keys())
 
 
 def set_seed(seed: int) -> None:
@@ -108,6 +128,39 @@ def restore_weights(model: torch.nn.Module, backup: Dict[str, torch.Tensor]) -> 
     for name, param in model.named_parameters():
         if name in backup:
             param.data.copy_(backup[name])
+
+
+def build_distributed_eval_sampler(dataset, ddp: bool, rank: int, world_size: int) -> Sampler | None:
+    """构建不重复样本的 DDP 评估采样器。"""
+    if not ddp:
+        return None
+    return DistributedEvalSamplerNoPad(dataset, num_replicas=world_size, rank=rank)
+
+
+def accumulate_image_metric_totals(
+    totals: Dict[str, float],
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    metric_keys: tuple[str, ...] = IMAGE_METRIC_KEYS,
+) -> int:
+    """按单图指标均值累加，返回本批样本数。"""
+    batch_size = int(pred.shape[0]) if pred.ndim == 4 else 1
+    for key in metric_keys:
+        totals[key] += IMAGE_METRIC_FNS[key](pred, target) * batch_size
+    return batch_size
+
+
+def mean_image_metrics(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    metric_keys: tuple[str, ...],
+) -> Dict[str, float]:
+    """计算一批样本的单图平均指标。"""
+    totals = {key: 0.0 for key in metric_keys}
+    sample_count = accumulate_image_metric_totals(totals, pred, target, metric_keys=metric_keys)
+    if sample_count <= 0:
+        return {key: float("nan") for key in metric_keys}
+    return {key: totals[key] / sample_count for key in metric_keys}
 
 
 def compute_time_weight(
@@ -222,13 +275,9 @@ def evaluate(
     eval_rng.manual_seed(eval_seed)
     
     model.eval()
-    totals = {
-        "loss": 0.0, "diff": 0.0, "recon": 0.0, "grad": 0.0,
-        "mae": 0.0, "mse": 0.0, "rmse": 0.0, "nrmse": 0.0,
-        "psnr": 0.0, "ssim": 0.0, "ms_ssim": 0.0, "sam": 0.0,
-        "ergas": 0.0, "cc": 0.0, "uiqi": 0.0, "rase": 0.0,
-    }
+    totals = {key: 0.0 for key in LOSS_KEYS + IMAGE_METRIC_KEYS}
     steps = 0
+    sample_count = 0
     
     show_progress = use_tqdm and (not ddp or dist.get_rank() == 0)
     iterator = loader
@@ -274,66 +323,42 @@ def evaluate(
                 grad_weight = cfg["loss"].get("grad_weight", 0.5)
                 loss = loss_diff + recon_weight * loss_recon + grad_weight * loss_grad
                 
-                # 计算指标
                 x0_p = x0_pred.detach().float()
                 x0_t = x0.detach().float()
-                m_mae = mae(x0_p, x0_t)
-                m_mse = mse(x0_p, x0_t)
-                m_rmse = rmse(x0_p, x0_t)
-                m_nrmse = nrmse(x0_p, x0_t)
-                m_psnr = psnr(x0_p, x0_t)
-                m_ssim = ssim(x0_p, x0_t)
-                m_ms_ssim = ms_ssim(x0_p, x0_t)
-                m_sam = sam(x0_p, x0_t)
-                m_ergas = ergas(x0_p, x0_t)
-                m_cc = cc(x0_p, x0_t)
-                m_uiqi = uiqi(x0_p, x0_t)
-                m_rase = rase(x0_p, x0_t)
+                batch_size = accumulate_image_metric_totals(totals, x0_p, x0_t)
 
             totals["loss"] += float(loss.item())
             totals["diff"] += float(loss_diff.item())
             totals["recon"] += float(loss_recon.item())
             totals["grad"] += float(loss_grad.item())
-            totals["mae"] += m_mae
-            totals["mse"] += m_mse
-            totals["rmse"] += m_rmse
-            totals["nrmse"] += m_nrmse
-            totals["psnr"] += m_psnr
-            totals["ssim"] += m_ssim
-            totals["ms_ssim"] += m_ms_ssim
-            totals["sam"] += m_sam
-            totals["ergas"] += m_ergas
-            totals["cc"] += m_cc
-            totals["uiqi"] += m_uiqi
-            totals["rase"] += m_rase
             steps += 1
+            sample_count += batch_size
     
     if backup is not None:
         restore_weights(model, backup)
     
     # DDP 聚合
     if ddp:
-        vals = [
-            totals["loss"], totals["diff"], totals["recon"], totals["grad"],
-            totals["mae"], totals["mse"], totals["rmse"], totals["nrmse"],
-            totals["psnr"], totals["ssim"], totals["ms_ssim"], totals["sam"],
-            totals["ergas"], totals["cc"], totals["uiqi"], totals["rase"],
-            float(steps)
-        ]
+        vals = [totals[key] for key in LOSS_KEYS + IMAGE_METRIC_KEYS] + [float(steps), float(sample_count)]
         metrics_tensor = torch.tensor(vals, device=device)
         dist.all_reduce(metrics_tensor, op=dist.ReduceOp.SUM)
-        total_steps = metrics_tensor[-1].item()
-        if total_steps == 0:
+        total_steps = metrics_tensor[-2].item()
+        total_samples = metrics_tensor[-1].item()
+        if total_steps == 0 or total_samples == 0:
             return {k: float("nan") for k in totals}
         res = {}
-        keys = list(totals.keys())
-        for i, k in enumerate(keys):
-            res[k] = metrics_tensor[i].item() / total_steps
+        for i, key in enumerate(LOSS_KEYS):
+            res[key] = metrics_tensor[i].item() / total_steps
+        offset = len(LOSS_KEYS)
+        for j, key in enumerate(IMAGE_METRIC_KEYS):
+            res[key] = metrics_tensor[offset + j].item() / total_samples
         return res
 
-    if steps == 0:
+    if steps == 0 or sample_count == 0:
         return {k: float("nan") for k in totals}
-    return {k: v / steps for k, v in totals.items()}
+    out = {key: totals[key] / steps for key in LOSS_KEYS}
+    out.update({key: totals[key] / sample_count for key in IMAGE_METRIC_KEYS})
+    return out
 
 
 def _auto_scale_rgb(rgb: np.ndarray, low_p: float, high_p: float) -> np.ndarray:
@@ -418,8 +443,6 @@ def save_vis_samples(
     use_ema: bool = False,
 ) -> None:
     """生成可视化采样缓存 (保存为 NPY，PNG 由离线脚本渲染)。"""
-    from sarcloud.utils.metrics import psnr, ssim, mae
-
     backup = None
     try:
         if len(dataset) == 0:
@@ -508,9 +531,10 @@ def save_vis_samples(
 
                 np.save(vis_dir / f"step_{int(step_cnt):04d}.npy", pred_cpu.numpy().astype(np.float32))
 
-                val_psnr = psnr(pred_cpu, x0_cpu)
-                val_ssim = ssim(pred_cpu, x0_cpu)
-                val_mae = mae(pred_cpu, x0_cpu)
+                vis_metrics = mean_image_metrics(pred_cpu, x0_cpu, ("psnr", "ssim", "mae"))
+                val_psnr = vis_metrics["psnr"]
+                val_ssim = vis_metrics["ssim"]
+                val_mae = vis_metrics["mae"]
                 metrics_map[str(int(step_cnt))] = {
                     "psnr": float(val_psnr),
                     "ssim": float(val_ssim),
@@ -609,7 +633,7 @@ def main() -> None:
     
     eval_sampler = None
     if ddp:
-        eval_sampler = DistributedSampler(eval_dataset, num_replicas=world_size, rank=rank, shuffle=False)
+        eval_sampler = build_distributed_eval_sampler(eval_dataset, ddp=True, rank=rank, world_size=world_size)
         
     eval_loader = build_loader(
         eval_dataset, eval_cfg,
@@ -910,6 +934,7 @@ def main() -> None:
                 "config": cfg,
                 "train_loss": train_loss,
                 "test_metrics": eval_metrics,
+                "test_metrics_protocol": METRIC_PROTOCOL,
             }
             torch.save(checkpoint, out_dir / "diffusion_rs_last.pth")
             torch.save({"ema_state": ema.shadow}, out_dir / "diffusion_rs_ema.pth")

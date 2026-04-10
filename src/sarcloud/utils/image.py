@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -109,31 +109,142 @@ def load_tif(path: str | Path) -> np.ndarray:
     return _ensure_chw(arr)
 
 
+def _prepare_clip_value_numpy(
+    value: float | Sequence[float] | np.ndarray,
+    channels: int,
+    name: str,
+) -> np.ndarray | np.float32:
+    """将归一化参数转换为 numpy 标量或 (C, 1, 1) 形状。"""
+    if np.isscalar(value):
+        return np.float32(value)
+
+    value_arr = np.asarray(value, dtype=np.float32)
+    if value_arr.ndim == 0:
+        return np.float32(value_arr.item())
+
+    flat = value_arr.reshape(-1)
+    if flat.size == 1:
+        return np.float32(flat.item())
+    if flat.size != channels:
+        raise ValueError(
+            f"{name} 通道数不匹配: 期望 1 或 {channels} 个值, 实际 {flat.size}"
+        )
+    return flat.reshape(channels, 1, 1)
+
+
+def _prepare_clip_value_torch(
+    value: float | Sequence[float] | np.ndarray,
+    channels: int,
+    name: str,
+    device: "torch.device",
+) -> "torch.Tensor":
+    """将归一化参数转换为 torch 标量或 (C, 1, 1) 形状。"""
+    import torch
+
+    if isinstance(value, torch.Tensor):
+        tensor = value.detach().to(device=device, dtype=torch.float32)
+    elif np.isscalar(value):
+        return torch.tensor(float(value), dtype=torch.float32, device=device)
+    else:
+        tensor = torch.as_tensor(value, dtype=torch.float32, device=device)
+
+    if tensor.ndim == 0:
+        return tensor
+
+    flat = tensor.reshape(-1)
+    if flat.numel() == 1:
+        return flat[0]
+    if flat.numel() != channels:
+        raise ValueError(
+            f"{name} 通道数不匹配: 期望 1 或 {channels} 个值, 实际 {flat.numel()}"
+        )
+    return flat.view(channels, 1, 1)
+
+
+def _validate_clip_range_numpy(denom: np.ndarray | np.float32) -> None:
+    """检查 numpy 分母是否均为正值。"""
+    flat = np.asarray(denom, dtype=np.float32).reshape(-1)
+    invalid = np.where(flat <= 0)[0]
+    if invalid.size == 0:
+        return
+    if flat.size == 1:
+        raise ValueError("clip_max must be > clip_min")
+    bad = ", ".join(str(int(idx)) for idx in invalid[:8])
+    suffix = " ..." if invalid.size > 8 else ""
+    raise ValueError(
+        f"clip_max 与 clip_min 在以下通道不合法 (clip_max<=clip_min): {bad}{suffix}"
+    )
+
+
+def _validate_clip_range_torch(denom: "torch.Tensor") -> None:
+    """检查 torch 分母是否均为正值。"""
+    import torch
+
+    flat = denom.reshape(-1)
+    invalid = torch.nonzero(flat <= 0, as_tuple=False).flatten()
+    if invalid.numel() == 0:
+        return
+    if flat.numel() == 1:
+        raise ValueError("clip_max must be > clip_min")
+    bad = ", ".join(str(int(idx)) for idx in invalid[:8].tolist())
+    suffix = " ..." if invalid.numel() > 8 else ""
+    raise ValueError(
+        f"clip_max 与 clip_min 在以下通道不合法 (clip_max<=clip_min): {bad}{suffix}"
+    )
+
+
 def normalize_s2(
-    arr: np.ndarray,
-    clip_min: float = 0.0,
-    clip_max: float = 10000.0,
-) -> np.ndarray:
+    arr: np.ndarray | "torch.Tensor",
+    clip_min: float | Sequence[float] | np.ndarray = 0.0,
+    clip_max: float | Sequence[float] | np.ndarray = 10000.0,
+) -> np.ndarray | "torch.Tensor":
     """归一化 Sentinel-2 光学影像。
 
     Sentinel-2 L1C/L2A 数据通常存储为 uint16，数值范围 0-10000 代表反射率 0.0-1.0。
     本函数将其线性映射到 [0, 1] 区间。
 
     Args:
-        arr (np.ndarray): 原始数组。
-        clip_min (float): 截断下限 (通常 0)。
-        clip_max (float): 截断上限 (通常 10000，对应反射率 1.0)。
+        arr: 原始数组，形状必须为 (C, H, W)，支持 np.ndarray 或 torch.Tensor。
+        clip_min: 截断下限，可为标量或长度为 C 的序列。
+        clip_max: 截断上限，可为标量或长度为 C 的序列。
 
     Returns:
-        np.ndarray: 归一化后的浮点数组，范围 [0, 1]。
+        归一化后的浮点数组，范围 [0, 1]，类型与输入保持一致。
     """
-    arr = arr.astype(np.float32)
-    # 截断异常值 (例如 > 10000 的云或强反射)
-    arr = np.clip(arr, clip_min, clip_max)
-    if clip_max <= clip_min:
-        raise ValueError("clip_max must be > clip_min")
-    # 线性归一化: (x - min) / (max - min)
-    return (arr - clip_min) / (clip_max - clip_min)
+    try:
+        import torch
+    except Exception:
+        torch = None
+
+    if torch is not None and isinstance(arr, torch.Tensor):
+        if arr.ndim != 3:
+            raise ValueError(
+                f"normalize_s2 期望输入为 (C, H, W)，实际收到形状: {tuple(arr.shape)}"
+            )
+        arr = arr.to(dtype=torch.float32)
+        channels = int(arr.shape[0])
+        clip_min_v = _prepare_clip_value_torch(clip_min, channels, "clip_min", arr.device)
+        clip_max_v = _prepare_clip_value_torch(clip_max, channels, "clip_max", arr.device)
+        denom = clip_max_v - clip_min_v
+        _validate_clip_range_torch(denom)
+        arr = torch.clamp(arr, min=clip_min_v, max=clip_max_v)
+        return (arr - clip_min_v) / denom
+
+    if not isinstance(arr, np.ndarray):
+        raise TypeError(
+            f"normalize_s2 仅支持 np.ndarray 或 torch.Tensor，实际类型: {type(arr)}"
+        )
+    if arr.ndim != 3:
+        raise ValueError(f"normalize_s2 期望输入为 (C, H, W)，实际收到形状: {arr.shape}")
+
+    arr = arr.astype(np.float32, copy=False)
+    channels = int(arr.shape[0])
+    clip_min_v = _prepare_clip_value_numpy(clip_min, channels, "clip_min")
+    clip_max_v = _prepare_clip_value_numpy(clip_max, channels, "clip_max")
+    denom = clip_max_v - clip_min_v
+    _validate_clip_range_numpy(denom)
+    arr = np.clip(arr, clip_min_v, clip_max_v)
+    return (arr - clip_min_v) / denom
 
 
 def normalize_s1_db(
