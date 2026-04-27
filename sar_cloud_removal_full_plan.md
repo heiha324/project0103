@@ -240,6 +240,11 @@ alpha_cache/
 - 训练 T：1000
 - 推理步数：30（薄云）/ 50（厚云）
 
+当前实现补充：
+- `scripts/train_diffusion_rs_transformer_v3.py` 是 Transformer 主干的标准 DDPM 版本，只替换 v2 的扩散过程，保留模型结构、loss、EMA、日志和 checkpoint 保存逻辑。
+- v3 前向加噪公式：`x_t = sqrt(alpha_bar_t) * x0 + sqrt(1 - alpha_bar_t) * ε`。
+- v3 模型仍使用条件输入 `(x_t, t, y, s1)`，其中 `y` 是有云 S2，`s1` 是 SAR；采样默认从纯高斯噪声开始。
+
 ### 8.4 损失函数（必须：扩散 + 区域化约束）
 1) 扩散噪声损失：
 - `L_diff = MSE(ε, ε_pred)`

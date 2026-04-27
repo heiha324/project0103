@@ -594,7 +594,7 @@ def save_vis_samples(
             scale_percentiles = [1.0, 99.0]
         scale_percentiles = (float(scale_percentiles[0]), float(scale_percentiles[1]))
         
-        rng = random.Random(base_seed + epoch)
+        rng = random.SystemRandom()
         sample_count = min(num_samples, len(dataset))
         indices = rng.sample(range(len(dataset)), k=sample_count)
 
@@ -753,7 +753,7 @@ def main() -> None:
         collate_fn=collate_sen12mscr,
     )
 
-    eval_cfg = cfg.get("test") or cfg.get("val") or data_cfg
+    eval_cfg = cfg.get("val") or cfg.get("test") or data_cfg
     eval_dataset = build_dataset(eval_cfg)
     
     eval_sampler = None
@@ -1039,7 +1039,7 @@ def main() -> None:
             # 单步预测评估 (快速)
             eval_metrics = evaluate_single_step(
                 eval_model, eval_loader, diffusion, cfg, device,
-                amp_device, amp_enabled, desc="Test (Single-step)", max_batches=eval_max_batches,
+                amp_device, amp_enabled, desc="Eval (Single-step)", max_batches=eval_max_batches,
                 use_tqdm=True, ema=ema, use_ema=True, ddp=ddp,
             )
             
@@ -1049,7 +1049,7 @@ def main() -> None:
             eval_model = get_base_model()
             full_sampling_metrics = evaluate_full_sampling(
                 eval_model, eval_loader, diffusion, cfg, device,
-                amp_device, amp_enabled, desc="Test (Full Sampling)", 
+                amp_device, amp_enabled, desc="Eval (Full Sampling)",
                 max_batches=full_sampling_max_batches,
                 use_tqdm=True, ema=ema, use_ema=True, ddp=ddp,
             )
@@ -1058,7 +1058,7 @@ def main() -> None:
             if eval_metrics is not None:
                 log_message(
                     f"Epoch {epoch+1}/{num_epochs} - [Single-step] "
-                    f"test_loss {eval_metrics['loss']:.4f} diff {eval_metrics['diff']:.4f} "
+                    f"eval_loss {eval_metrics['loss']:.4f} diff {eval_metrics['diff']:.4f} "
                     f"recon {eval_metrics['recon']:.4f} grad {eval_metrics['grad']:.4f}\n"
                     f"  MAE {eval_metrics.get('mae', 0):.4f} MSE {eval_metrics.get('mse', 0):.4f} "
                     f"RMSE {eval_metrics.get('rmse', 0):.4f} PSNR {eval_metrics.get('psnr', 0):.2f}\n"
@@ -1095,6 +1095,7 @@ def main() -> None:
                 "ema_state": ema.shadow,
                 "config": cfg,
                 "train_loss": train_loss,
+                "eval_metrics": eval_metrics,
                 "test_metrics": eval_metrics,
                 "full_sampling_metrics": full_sampling_metrics,
             }
@@ -1103,12 +1104,12 @@ def main() -> None:
             log_message(f"Epoch {epoch+1}/{num_epochs} - checkpoints saved", logger, console=True, use_tqdm=True)
             
             if eval_metrics is not None:
-                test_loss = float(eval_metrics.get("loss", float("nan")))
-                if math.isfinite(test_loss) and test_loss < best_loss:
-                    best_loss = test_loss
+                eval_loss = float(eval_metrics.get("loss", float("nan")))
+                if math.isfinite(eval_loss) and eval_loss < best_loss:
+                    best_loss = eval_loss
                     torch.save(checkpoint, out_dir / "diffusion_rs_best.pth")
                     log_message(
-                        f"Epoch {epoch+1}/{num_epochs} - saved diffusion_rs_best.pth (test_loss {test_loss:.4f})",
+                        f"Epoch {epoch+1}/{num_epochs} - saved diffusion_rs_best.pth (eval_loss {eval_loss:.4f})",
                         logger, console=True, use_tqdm=True
                     )
 

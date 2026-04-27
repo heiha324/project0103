@@ -179,7 +179,7 @@ def main() -> None:
         collate_fn=base.collate_sen12mscr,
     )
 
-    eval_cfg = cfg.get("test") or cfg.get("val") or data_cfg
+    eval_cfg = cfg.get("val") or cfg.get("test") or data_cfg
     eval_dataset = base.build_dataset(eval_cfg)
 
     eval_sampler = None
@@ -575,7 +575,7 @@ def main() -> None:
             device,
             amp_device,
             amp_enabled,
-            desc="Test",
+            desc="Eval",
             max_batches=eval_max_batches,
             use_tqdm=True,
             ema=ema,
@@ -595,7 +595,7 @@ def main() -> None:
                 amp_device,
                 amp_enabled,
                 sampling_steps=psnr_eval_steps,
-                desc=f"Test Sampling {'/'.join(str(s) for s in psnr_eval_steps)}",
+                desc=f"Eval Sampling {'/'.join(str(s) for s in psnr_eval_steps)}",
                 max_batches=psnr_eval_max_batches,
                 use_tqdm=True,
                 ema=ema,
@@ -607,7 +607,7 @@ def main() -> None:
             if eval_metrics is not None:
                 base.log_message(
                     f"Epoch {epoch+1}/{num_epochs} - "
-                    f"test_loss {eval_metrics['loss']:.4f} diff {eval_metrics['diff']:.4f} "
+                    f"eval_loss {eval_metrics['loss']:.4f} diff {eval_metrics['diff']:.4f} "
                     f"recon {eval_metrics['recon']:.4f} grad {eval_metrics['grad']:.4f}\n"
                     f"  MAE {eval_metrics.get('mae', 0):.4f} MSE {eval_metrics.get('mse', 0):.4f} "
                     f"RMSE {eval_metrics.get('rmse', 0):.4f} PSNR {eval_metrics.get('psnr', 0):.2f}\n"
@@ -662,8 +662,10 @@ def main() -> None:
                 "scaler_state": scaler.state_dict() if scaler is not None else None,
                 "config": cfg,
                 "train_loss": train_loss,
+                "eval_metrics": eval_metrics,
                 "test_metrics": eval_metrics,
                 "sampling_eval_metrics": sampling_eval_metrics,
+                "eval_metrics_protocol": base.METRIC_PROTOCOL,
                 "test_metrics_protocol": base.METRIC_PROTOCOL,
                 "sampling_metrics_protocol": SAMPLING_METRIC_PROTOCOL,
                 "save_every_epochs": save_every_epochs,

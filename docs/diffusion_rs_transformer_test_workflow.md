@@ -1,13 +1,14 @@
-# diffusion_rs_transformer 测试流程（旧版 + v2）
+# diffusion_rs_transformer 测试流程（旧版 + v2 + v3）
 
-本文整理了当前项目里对 `diffusion_rs_transformer` checkpoint 的测试方式，覆盖两类模型：
+本文整理了当前项目里对 `diffusion_rs_transformer` checkpoint 的测试方式，覆盖三类模型：
 
 1. 旧版 `diffusion_rs_transformer`（`sarcloud.models.cond_transformer`）
 2. 新版 `diffusion_rs_transformer_v2`（`scripts/train_diffusion_rs_transformer_v2.py` 内联模型）
+3. 标准 DDPM 版 `diffusion_rs_transformer_v3`（`scripts/train_diffusion_rs_transformer_v3.py` 内联模型）
 
 同时包含：
 - 常规 `PSNR / SSIM / MAE` 评估
-- `v2` 的 **按波段 PSNR**（13 通道）评估
+- `v2` / `v3` 的 **按波段 PSNR**（13 通道）评估
 
 ## 1. 环境准备
 
@@ -39,10 +40,23 @@ export LD_LIBRARY_PATH=$HOME/.local/lib/python3.12/site-packages/nvidia/nvjitlin
 通常来自：
 - `scripts/train_diffusion_rs_transformer_v2.py`
 - 模型类：`train_diffusion_rs_transformer_v2.ConditionalTransformer`
+- 扩散过程：Residual Shifting，前向公式为 `x_t = (1-η_t)*x0 + η_t*y + sqrt(η_t)*κ*noise`
 
 注意：
 - `scripts/sample_diffusion_rs_transformer.py` 使用的是旧版 `cond_transformer`，**不适配 v2 结构**。
 - `v2` 推荐直接用下文“在线评估脚本”（不落盘样本）做指标统计。
+
+### 2.3 v3 checkpoint
+
+通常来自：
+- `scripts/train_diffusion_rs_transformer_v3.py`
+- 模型类：`train_diffusion_rs_transformer_v3.ConditionalTransformer`
+- 扩散过程：标准 DDPM，前向公式为 `x_t = sqrt(alpha_bar_t)*x0 + sqrt(1-alpha_bar_t)*noise`
+
+注意：
+- v3 只替换扩散过程，模型结构、loss、EMA、日志和 checkpoint 保存逻辑沿用 v2。
+- `scripts/eval_diffusion_rs_transformer_v2_adaptive.py` 使用 v2/Residual Shifting 采样逻辑，**不适配 v3 checkpoint**。
+- v3 在线评估请使用下文“v3 流程”中的 `GaussianDiffusion` + `_sample_batch_ddpm`。
 
 ## 3. 评估 split 选择（test / val）
 
@@ -352,10 +366,144 @@ print(f"Total samples={sample_count}")
 PY
 ```
 
-## 6. 常用排查
+## 6. v3 流程：标准 DDPM 20 步按波段 PSNR
+
+> 适用于 `train_diffusion_rs_transformer_v3.py` 训练出来的 checkpoint。  
+> 不需要先落盘 `sample_*.npy`，直接在线推理并统计。
+
+```bash
+export CKPT=/home/data/KXShen/model/project0103/diffusion_rs_transformer_v2_13ch_wide_sen12mscr_YYYYMMDD_HHMMSS/diffusion_rs_transformer_epoch_0020.pth
+export STEPS=20
+export ETA=0.0
+export BS=8
+
+CUDA_VISIBLE_DEVICES=2 python - <<'PY'
+from __future__ import annotations
+import math
+import os
+import sys
+from pathlib import Path
+import numpy as np
+import torch
+from torch.utils.data import DataLoader
+
+ROOT = Path("/home/ps/KXShen/syncfolder/project0103")
+sys.path.append(str(ROOT / "src"))
+sys.path.append(str(ROOT / "scripts"))
+
+import train_diffusion_rs as base
+from sarcloud.diffusion.gaussian import GaussianDiffusion
+from sarcloud.training.ema import EMA
+from train_diffusion_rs_transformer_v3 import ConditionalTransformer, _sample_batch_ddpm
+
+ckpt_path = Path(os.environ.get("CKPT", "/home/data/KXShen/model/project0103/diffusion_rs_transformer_v2_13ch_wide_sen12mscr_YYYYMMDD_HHMMSS/diffusion_rs_transformer_epoch_0020.pth"))
+steps = int(os.environ.get("STEPS", "20"))
+eta = float(os.environ.get("ETA", "0.0"))
+batch_size = int(os.environ.get("BS", "8"))
+num_workers = 4
+band_names = ["B1","B2","B3","B4","B5","B6","B7","B8","B8A","B9","B10","B11","B12"]
+
+checkpoint = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+cfg = checkpoint["config"]
+data_cfg = cfg.get("test") or cfg.get("val") or cfg["sen12ms"]
+dataset = base.build_dataset(data_cfg)
+loader = DataLoader(
+    dataset,
+    batch_size=batch_size,
+    shuffle=False,
+    num_workers=num_workers,
+    pin_memory=True,
+    drop_last=False,
+    collate_fn=base.collate_sen12mscr,
+)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+model_cfg = cfg["model"]
+model = ConditionalTransformer(
+    x_channels=model_cfg["x_channels"],
+    y_channels=model_cfg["y_channels"],
+    s_channels=model_cfg["s_channels"],
+    embed_dim=model_cfg.get("embed_dim", 512),
+    depth=model_cfg.get("depth", 8),
+    num_heads=model_cfg.get("num_heads", 16),
+    patch_size=model_cfg.get("patch_size", 16),
+    time_dim=model_cfg.get("time_dim", 256),
+    mlp_ratio=model_cfg.get("mlp_ratio", 4.0),
+    dropout=model_cfg.get("dropout", 0.0),
+    refine_channels=model_cfg.get("refine_channels", 256),
+    detail_min_channels=model_cfg.get("detail_min_channels", 128),
+    cond_se_reduction=model_cfg.get("cond_se_reduction", 16),
+).to(device)
+
+model.load_state_dict(checkpoint["model_state"], strict=False)
+ema = EMA(model, decay=cfg.get("train", {}).get("ema_decay", 0.999))
+if "ema_state" in checkpoint:
+    ema.shadow = checkpoint["ema_state"]
+    ema.apply_to(model)
+model.eval()
+
+diff_cfg = cfg.get("diffusion", {})
+schedule_cfg = cfg.get("schedule", {})
+diffusion = GaussianDiffusion(
+    timesteps=diff_cfg.get("timesteps", schedule_cfg.get("timesteps", 1000)),
+    schedule_type=diff_cfg.get("schedule_type", schedule_cfg.get("type", "linear")),
+    beta_start=diff_cfg.get("beta_start", schedule_cfg.get("beta_start", 1e-4)),
+    beta_end=diff_cfg.get("beta_end", schedule_cfg.get("beta_end", 2e-2)),
+    device=device,
+    x0_clip_min=schedule_cfg.get("x0_clip_min", 0.0),
+    x0_clip_max=schedule_cfg.get("x0_clip_max", 1.0),
+)
+
+sampling_cfg = dict(cfg.get("sampling", {}))
+sampling_cfg["steps"] = steps
+sampling_cfg["eta"] = eta
+
+c = int(model_cfg["x_channels"])
+sum_sq = torch.zeros(c, dtype=torch.float64, device=device)
+pixel_count = 0
+sample_count = 0
+
+with torch.no_grad():
+    for s1, s2_cloudy, s2_clear, _alpha in loader:
+        s1 = s1.to(device, non_blocking=True)
+        y = s2_cloudy.to(device, non_blocking=True)
+        x0 = s2_clear.to(device, non_blocking=True)
+
+        pred = _sample_batch_ddpm(
+            model,
+            diffusion,
+            y,
+            s1,
+            steps=steps,
+            schedule_cfg=sampling_cfg,
+        ).clamp_(0.0, 1.0)
+
+        diff2 = (pred - x0).to(torch.float64).pow_(2)
+        sum_sq += diff2.sum(dim=(0, 2, 3))
+
+        bsz, _c, h, w = pred.shape
+        pixel_count += int(bsz * h * w)
+        sample_count += int(bsz)
+
+mse_band = (sum_sq / max(pixel_count, 1)).detach().cpu().numpy()
+psnr_band = np.where(mse_band < 1e-12, 100.0, -10.0 * np.log10(np.clip(mse_band, 1e-12, None)))
+
+overall_mse = float(mse_band.mean())
+overall_psnr = 100.0 if overall_mse < 1e-12 else float(-10.0 * math.log10(max(overall_mse, 1e-12)))
+
+print(f"=== Per-band PSNR (v3 DDPM, steps={steps}, eta={eta}) ===")
+for i, name in enumerate(band_names[:len(psnr_band)]):
+    print(f"{name}: PSNR={psnr_band[i]:.4f} dB, MSE={mse_band[i]:.8f}")
+print(f"Overall(mean-band) PSNR={overall_psnr:.4f} dB, MSE={overall_mse:.8f}")
+print(f"Total samples={sample_count}")
+PY
+```
+
+## 7. 常用排查
 
 - 查看 GPU 占用：`nvidia-smi`
 - 只看采样是否完成：日志中出现 `Saved samples to ...`
 - 停止旧版采样任务：`pkill -f sample_diffusion_rs_transformer.py`
 - 停止 v2 在线评估任务：`pkill -f diffusion_rs_transformer_epoch_`
-
+- 停止 v3 训练任务：`pkill -f train_diffusion_rs_transformer_v3.py`

@@ -294,6 +294,36 @@ class Sen12MSCRRawDataset(Dataset):
         # 将 split 名称映射到数字 ID
         split_id_map = {"train": "1", "val": "2", "test": "3"}
         target_split_id = split_id_map.get(self.split, self.split) if self.split else None
+        
+        def split_matches(row_split: str) -> bool:
+            """兼容 split 名称 (train/val/test) 与数字 ID (1/2/3)。"""
+            if not self.split:
+                return True
+            value = row_split.strip()
+            if not value:
+                return False
+            return value == self.split or (target_split_id is not None and value == target_split_id)
+        
+        def build_cloudy_from_supplementary_filename(filename: str) -> Optional[Path]:
+            """根据官方补充文件名构建 s2_cloudy 图像路径。"""
+            parts = filename.replace(".tif", "").split("_")
+            if len(parts) < 4:
+                return None
+            scene = parts[0]       # ROIs1158
+            season = parts[1]      # spring
+            tile = parts[2]        # 101
+            patch = parts[3]       # p675
+            roi_dir = f"{scene}_{season}_s2_cloudy"
+            subdir = f"s2_cloudy_{tile}"
+            full_filename = f"{scene}_{season}_s2_cloudy_{tile}_{patch}.tif"
+            return self.root / roi_dir / subdir / full_filename
+        
+        def build_cloudy_from_roi_sample(roi: str, sample: str) -> Path:
+            """根据 split,roi,sample 三列表头格式构建 s2_cloudy 图像路径。"""
+            roi_cloudy = roi.replace("_s1/", "_s2_cloudy/")
+            roi_cloudy = roi_cloudy.replace("/s1_", "/s2_cloudy_")
+            sample_cloudy = sample.replace("_s1_", "_s2_cloudy_")
+            return self.root / roi_cloudy / sample_cloudy
             
         cloudy_paths: List[Path] = []
         with self.split_csv.open("r", encoding="utf-8", newline="") as f:
@@ -315,26 +345,15 @@ class Sen12MSCRRawDataset(Dataset):
                     filename = row[4].strip()
                     
                     # 过滤划分
-                    if target_split_id and row_split_id != target_split_id:
+                    if not split_matches(row_split_id):
                         continue
                     
                     # 从文件名解析路径
                     # 文件名格式: ROIs{scene}_{season}_{tile}_p{patch}.tif
                     # 例如: ROIs1158_spring_101_p675.tif
                     # 对应目录: ROIs1158_spring_s2_cloudy/s2_cloudy_101/ROIs1158_spring_s2_cloudy_101_p675.tif
-                    parts = filename.replace(".tif", "").split("_")
-                    if len(parts) >= 4:
-                        # 解析: ROIs1158, spring, 101, p675
-                        scene = parts[0]       # ROIs1158
-                        season = parts[1]      # spring
-                        tile = parts[2]        # 101
-                        patch = parts[3]       # p675
-                        
-                        # 构建完整路径
-                        roi_dir = f"{scene}_{season}_s2_cloudy"
-                        subdir = f"s2_cloudy_{tile}"
-                        full_filename = f"{scene}_{season}_s2_cloudy_{tile}_{patch}.tif"
-                        cloudy_path = self.root / roi_dir / subdir / full_filename
+                    cloudy_path = build_cloudy_from_supplementary_filename(filename)
+                    if cloudy_path is not None:
                         cloudy_paths.append(cloudy_path)
             else:
                 # 有表头格式 (旧格式)
@@ -343,7 +362,8 @@ class Sen12MSCRRawDataset(Dataset):
                     raise RuntimeError(f"CSV 缺失表头: {self.split_csv}")
                 for row in reader:
                     # 过滤划分
-                    if self.split and row.get("split") != self.split:
+                    row_split = (row.get("split") or "").strip()
+                    if not split_matches(row_split):
                         continue
                     
                     # 尝试获取路径列
@@ -354,6 +374,14 @@ class Sen12MSCRRawDataset(Dataset):
                         or ""
                     )
                     if not path_str:
+                        roi = (row.get("roi") or "").strip()
+                        sample = (
+                            row.get("sample")
+                            or row.get("filename")
+                            or ""
+                        ).strip()
+                        if roi and sample:
+                            cloudy_paths.append(build_cloudy_from_roi_sample(roi, sample))
                         continue
                         
                     candidate = Path(path_str)

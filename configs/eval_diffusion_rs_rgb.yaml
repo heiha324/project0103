@@ -4,7 +4,7 @@ sen12ms:
   dataset: "sen12mscr_raw"
   root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
   alpha_root: "/home/data/KXShen/model/project0103/alpha_cache_sen12mscr_raw"
-  split_csv: "supplementary_SEN12MSCR/outdated_train_val_test_patches.csv"
+  split_csv: "/home/ps/KXShen/syncfolder/project0103/supplementary_SEN12MSCR/splits.csv"
   split: "test"
   alpha_ext: ".npy"
   image_ext: ".tif"

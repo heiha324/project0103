@@ -8,6 +8,7 @@ rsnet:
 sen12ms:
   dataset: "sen12mscr_raw"
   root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
+  split_csv: "/home/ps/KXShen/syncfolder/project0103/supplementary_SEN12MSCR/splits.csv"
   cloudy_glob: "ROIs*_s2_cloudy/s2_cloudy_*/*.tif"
   image_ext: ".tif"
   bands: [1, 2, 3, 7]

@@ -704,7 +704,7 @@ def main() -> None:
         collate_fn=base.collate_sen12mscr,
     )
 
-    eval_cfg = cfg.get("test") or cfg.get("val") or data_cfg
+    eval_cfg = cfg.get("val") or cfg.get("test") or data_cfg
     eval_dataset = base.build_dataset(eval_cfg)
 
     eval_sampler = None
@@ -729,6 +729,29 @@ def main() -> None:
     eval_max_batches = int(eval_cfg.get("max_batches", 0))
     if ddp and eval_max_batches > 0:
         eval_max_batches = max(1, eval_max_batches // world_size)
+
+    test_eval_cfg = cfg.get("test")
+    test_eval_dataset = None
+    test_eval_loader = None
+    if test_eval_cfg is not None and test_eval_cfg is not eval_cfg:
+        test_eval_dataset = base.build_dataset(test_eval_cfg)
+        test_eval_sampler = None
+        if ddp:
+            test_eval_sampler = base.build_distributed_eval_sampler(
+                test_eval_dataset,
+                ddp=True,
+                rank=rank,
+                world_size=world_size,
+            )
+        test_eval_loader = base.build_loader(
+            test_eval_dataset,
+            test_eval_cfg,
+            batch_size=test_eval_cfg.get("batch_size", cfg["train"]["batch_size"]),
+            shuffle=False,
+            sampler=test_eval_sampler,
+            drop_last=False,
+            collate_fn=base.collate_sen12mscr,
+        )
 
     model_cfg = cfg["model"]
     model = ConditionalTransformer(
@@ -774,6 +797,7 @@ def main() -> None:
     num_epochs = cfg["train"]["num_epochs"]
     warmup_epochs = cfg["train"].get("warmup_epochs", 5)
     use_scheduler = cfg["train"].get("use_scheduler", True)
+    resume_lr_from_config = bool(cfg["train"].get("resume_lr_from_config", True))
     scheduler = None
     if use_scheduler:
         warmup_scheduler = torch.optim.lr_scheduler.LinearLR(
@@ -806,6 +830,7 @@ def main() -> None:
     best_psnr_epoch = -1
     best_train_loss_epoch = -1
     if args.resume:
+        scheduler_state_loaded = False
         ckpt_path = Path(args.resume)
         if not ckpt_path.exists():
             raise FileNotFoundError(f"Resume checkpoint not found: {ckpt_path}")
@@ -832,11 +857,22 @@ def main() -> None:
             optimizer.load_state_dict(checkpoint["optimizer_state"])
             if is_main:
                 print(f"Loaded optimizer state from {ckpt_path}")
+            if resume_lr_from_config:
+                for group in optimizer.param_groups:
+                    group["lr"] = base_lr
+                    if "initial_lr" in group:
+                        group["initial_lr"] = base_lr
+                if is_main:
+                    print(f"Overrode optimizer lr with config value: {base_lr:.2e}")
 
-        if scheduler is not None and checkpoint.get("scheduler_state") is not None:
-            scheduler.load_state_dict(checkpoint["scheduler_state"])
-            if is_main:
-                print(f"Loaded scheduler state from {ckpt_path}")
+        if scheduler is not None:
+            if checkpoint.get("scheduler_state") is not None and not resume_lr_from_config:
+                scheduler.load_state_dict(checkpoint["scheduler_state"])
+                scheduler_state_loaded = True
+                if is_main:
+                    print(f"Loaded scheduler state from {ckpt_path}")
+            elif checkpoint.get("scheduler_state") is not None and is_main and resume_lr_from_config:
+                print("Skipped scheduler state from checkpoint; using scheduler config from current run.")
 
         if scaler is not None and checkpoint.get("scaler_state") is not None:
             scaler.load_state_dict(checkpoint["scaler_state"])
@@ -878,16 +914,14 @@ def main() -> None:
         if checkpoint.get("best_train_loss_epoch") is not None:
             best_train_loss_epoch = int(checkpoint.get("best_train_loss_epoch"))
 
-        if (
-            start_epoch > 0
-            and "optimizer_state" not in checkpoint
-            and scheduler is not None
-            and checkpoint.get("scheduler_state") is None
-        ):
+        if start_epoch > 0 and scheduler is not None and not scheduler_state_loaded:
             for _ in range(start_epoch):
                 scheduler.step()
             if is_main:
-                print(f"Advanced scheduler by {start_epoch} epochs to match resumed training")
+                print(
+                    f"Advanced scheduler by {start_epoch} epochs with current config "
+                    f"(resume_lr_from_config={resume_lr_from_config})"
+                )
 
     output_cfg = cfg.get("output", {})
     save_every_epochs = max(1, int(output_cfg.get("save_every_epochs", 3)))
@@ -1102,7 +1136,7 @@ def main() -> None:
             device,
             amp_device,
             amp_enabled,
-            desc="Test",
+            desc="Eval",
             max_batches=eval_max_batches,
             use_tqdm=True,
             ema=ema,
@@ -1112,6 +1146,7 @@ def main() -> None:
 
         run_sampling_eval = (epoch + 1) % save_every_epochs == 0
         sampling_eval_metrics: dict[int, dict[str, float]] | None = None
+        test_sampling_eval_metrics: dict[int, dict[str, float]] | None = None
         if run_sampling_eval:
             sampling_eval_metrics = evaluate_sampling_steps(
                 eval_model,
@@ -1122,19 +1157,36 @@ def main() -> None:
                 amp_device,
                 amp_enabled,
                 sampling_steps=psnr_eval_steps,
-                desc=f"Test Sampling {'/'.join(str(s) for s in psnr_eval_steps)}",
+                desc=f"Eval Sampling {'/'.join(str(s) for s in psnr_eval_steps)}",
                 max_batches=psnr_eval_max_batches,
                 use_tqdm=True,
                 ema=ema,
                 use_ema=True,
                 ddp=ddp,
             )
+            if test_eval_loader is not None:
+                test_sampling_eval_metrics = evaluate_sampling_steps(
+                    eval_model,
+                    test_eval_loader,
+                    diffusion,
+                    cfg,
+                    device,
+                    amp_device,
+                    amp_enabled,
+                    sampling_steps=psnr_eval_steps,
+                    desc=f"Test Sampling {'/'.join(str(s) for s in psnr_eval_steps)}",
+                    max_batches=psnr_eval_max_batches,
+                    use_tqdm=True,
+                    ema=ema,
+                    use_ema=True,
+                    ddp=ddp,
+                )
 
         if is_main:
             if eval_metrics is not None:
                 base.log_message(
                     f"Epoch {epoch+1}/{num_epochs} - "
-                    f"test_loss {eval_metrics['loss']:.4f} diff {eval_metrics['diff']:.4f} "
+                    f"eval_loss {eval_metrics['loss']:.4f} diff {eval_metrics['diff']:.4f} "
                     f"recon {eval_metrics['recon']:.4f} grad {eval_metrics['grad']:.4f}\n"
                     f"  MAE {eval_metrics.get('mae', 0):.4f} MSE {eval_metrics.get('mse', 0):.4f} "
                     f"RMSE {eval_metrics.get('rmse', 0):.4f} PSNR {eval_metrics.get('psnr', 0):.2f}\n"
@@ -1151,10 +1203,25 @@ def main() -> None:
                 for step_cnt in psnr_eval_steps:
                     step_metrics = sampling_eval_metrics.get(int(step_cnt)) or {}
                     base.log_message(
-                        f"Epoch {epoch+1}/{num_epochs} - [Sampling {step_cnt}] "
+                        f"Epoch {epoch+1}/{num_epochs} - [Val Sampling {step_cnt}] "
                         f"PSNR {step_metrics.get('psnr', float('nan')):.2f} "
                         f"SSIM {step_metrics.get('ssim', float('nan')):.4f} "
-                        f"MAE {step_metrics.get('mae', float('nan')):.4f}",
+                        f"MAE {step_metrics.get('mae', float('nan')):.4f} "
+                        f"SAM {step_metrics.get('sam', float('nan')):.2f}",
+                        logger,
+                        console=True,
+                        use_tqdm=True,
+                    )
+
+            if test_sampling_eval_metrics is not None:
+                for step_cnt in psnr_eval_steps:
+                    step_metrics = test_sampling_eval_metrics.get(int(step_cnt)) or {}
+                    base.log_message(
+                        f"Epoch {epoch+1}/{num_epochs} - [Test Sampling {step_cnt}] "
+                        f"PSNR {step_metrics.get('psnr', float('nan')):.2f} "
+                        f"SSIM {step_metrics.get('ssim', float('nan')):.4f} "
+                        f"MAE {step_metrics.get('mae', float('nan')):.4f} "
+                        f"SAM {step_metrics.get('sam', float('nan')):.2f}",
                         logger,
                         console=True,
                         use_tqdm=True,
@@ -1189,8 +1256,11 @@ def main() -> None:
                 "scaler_state": scaler.state_dict() if scaler is not None else None,
                 "config": cfg,
                 "train_loss": train_loss,
+                "eval_metrics": eval_metrics,
                 "test_metrics": eval_metrics,
                 "sampling_eval_metrics": sampling_eval_metrics,
+                "test_sampling_eval_metrics": test_sampling_eval_metrics,
+                "eval_metrics_protocol": base.METRIC_PROTOCOL,
                 "test_metrics_protocol": base.METRIC_PROTOCOL,
                 "sampling_metrics_protocol": SAMPLING_METRIC_PROTOCOL,
                 "save_every_epochs": save_every_epochs,

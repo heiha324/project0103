@@ -14,7 +14,7 @@ from sarcloud.utils.image import load_tif
 
 # Config matching your diffusion.yaml
 DATA_ROOT = "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
-SPLIT_CSV = "splits/sen12mscr_split.csv"
+SPLIT_CSV = "/home/ps/KXShen/syncfolder/project0103/supplementary_SEN12MSCR/splits.csv"
 
 def analyze():
     print("Initializing dataset...")

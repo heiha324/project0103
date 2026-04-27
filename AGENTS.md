@@ -50,6 +50,13 @@
 #### Residual Shifting Diffusion（推荐）
 - `python scripts/train_diffusion_rs.py --config configs/diffusion_rs.yaml`
 
+#### Transformer v3 标准 DDPM
+- `python scripts/train_diffusion_rs_transformer_v3.py --config configs/diffusion_rs_transformer_v2_13ch_wide.yaml`
+- v3 复用 v2 的 Transformer 结构、loss、EMA、日志和 checkpoint 保存逻辑，只把扩散过程改为标准 DDPM：
+  - 前向过程: `x_t = sqrt(alpha_bar_t) * x0 + sqrt(1 - alpha_bar_t) * noise`
+  - 采样默认从纯高斯噪声开始；模型仍以有云图像 `y` 和 SAR `s1` 作为条件输入。
+- v3 输出目录仍读取配置中的 `output.dir`，checkpoint 文件名保持 `diffusion_rs_transformer_*.pth`。
+
 > Residual Shifting 与标准 DDPM 的区别：
 > - 前向过程: `x_t = (1-η)*x0 + η*y + √η*κ*noise` (需要有云图像 y)
 > - 采样起点: `x_T = y + noise` (从有云图像开始，而非纯噪声)

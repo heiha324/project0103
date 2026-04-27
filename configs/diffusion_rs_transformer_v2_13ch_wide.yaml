@@ -25,8 +25,8 @@ model:
 
 train:
   batch_size: 12
-  num_epochs: 1000
-  lr: 5.0e-5
+  num_epochs: 2000
+  lr: 1.0e-4
   weight_decay: 1.0e-4
   ema_decay: 0.999
   amp: false
@@ -58,8 +58,20 @@ sen12ms:
   s2_clip_max: 10000.0
   s1_db_min: -25.0
   s1_db_max: 0.0
-  split_csv: "supplementary_SEN12MSCR/outdated_train_val_test_patches.csv"
+  split_csv: "/home/ps/KXShen/syncfolder/project0103/supplementary_SEN12MSCR/splits.csv"
   split: "train"
+
+val:
+  dataset: "sen12mscr_raw"
+  root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
+  image_ext: ".tif"
+  bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+  s2_clip_min: 0.0
+  s2_clip_max: 10000.0
+  s1_db_min: -25.0
+  s1_db_max: 0.0
+  split_csv: "/home/ps/KXShen/syncfolder/project0103/supplementary_SEN12MSCR/splits.csv"
+  split: "val"
 
 test:
   dataset: "sen12mscr_raw"
@@ -70,12 +82,12 @@ test:
   s2_clip_max: 10000.0
   s1_db_min: -25.0
   s1_db_max: 0.0
-  split_csv: "supplementary_SEN12MSCR/outdated_train_val_test_patches.csv"
+  split_csv: "/home/ps/KXShen/syncfolder/project0103/supplementary_SEN12MSCR/splits.csv"
   split: "test"
 
 output:
   save_every_epochs: 20
-  psnr_eval_steps: [5, 10, 20]
+  psnr_eval_steps: [5, 10, 20, 50]
   psnr_eval_max_batches: 0
   dir: "/home/data/KXShen/model/project0103/diffusion_rs_transformer_v2_13ch_wide_sen12mscr"
 

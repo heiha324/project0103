@@ -5,6 +5,7 @@
 - 生成 alpha 缓存
 - SAR 引导扩散模型训练与采样
 - Transformer 主干的 Residual Shifting 扩散训练
+- Transformer 主干的标准 DDPM 扩散训练（v3）
 - 区域化评估
 
 该实现基于 `sar_cloud_removal_full_plan.md` 的方案落地。
@@ -84,7 +85,7 @@ python scripts/train_diffusion.py --config configs/diffusion.yaml
 python scripts/train_diffusion_rs.py --config configs/diffusion_rs.yaml
 ```
 
-#### 方案 C: Residual Shifting + Conditional Transformer（新增）
+#### 方案 C: Residual Shifting + Conditional Transformer
 ```bash
 python scripts/train_diffusion_rs_transformer.py --config configs/diffusion_rs_transformer.yaml
 ```
@@ -94,6 +95,18 @@ python scripts/train_diffusion_rs_transformer.py --config configs/diffusion_rs_t
 - 保留当前 Residual Shifting 扩散过程、loss、EMA、评估和可视化流程。
 - 去噪主干由 `ConditionalUNet` 改为 patch-based `ConditionalTransformer`。
 - 默认配置比 U-Net 更吃显存，`configs/diffusion_rs_transformer.yaml` 已将 `batch_size` 调低到 8。
+
+#### 方案 D: 标准 DDPM + Conditional Transformer v3
+```bash
+python scripts/train_diffusion_rs_transformer_v3.py --config configs/diffusion_rs_transformer_v2_13ch_wide.yaml
+```
+
+说明：
+- v3 只把 v2 的扩散过程替换为标准 DDPM，模型结构、loss、EMA、日志和 checkpoint 保存逻辑保持 v2 风格。
+- 前向加噪公式为 `x_t = sqrt(alpha_bar_t) * x0 + sqrt(1 - alpha_bar_t) * noise`。
+- 模型仍然接收条件输入 `(x_t, t, y, s1)`；其中 `y` 是有云 S2，`s1` 是 SAR。
+- v3 沿用现有配置即可运行；`diffusion.kappa`、`diffusion.min_eta`、`diffusion.max_eta`、`diffusion.power` 对标准 DDPM 不生效。
+- 输出目录仍读取配置中的 `output.dir`，checkpoint 文件名也保持 `diffusion_rs_transformer_*.pth`；如需和 v2 结果分目录保存，请复制配置并修改 `output.dir`。
 
 > **为什么推荐 Residual Shifting?**
 >
@@ -117,6 +130,24 @@ python scripts/sample_diffusion.py --config configs/diffusion.yaml
 python scripts/sample_diffusion_rs_transformer.py \
   --config configs/diffusion_rs_transformer.yaml \
   --checkpoint /path/to/diffusion_rs_transformer_best.pth
+
+# Residual Shifting + Transformer v2（按云量自适应步数评估）
+# 规则：云量<0.01 直接输出；云量>=0.01 线性映射到 10~50 步
+python scripts/eval_diffusion_rs_transformer_v2_adaptive.py \
+  --config configs/diffusion_rs_transformer_v2_13ch_wide.yaml \
+  --checkpoint /path/to/diffusion_rs_transformer_best.pth \
+  --rsnet-config configs/rsnet_whu_ori.yaml \
+  --rsnet-checkpoint /path/to/rsnet_best.pth \
+  --rsnet-temperature-json /path/to/rsnet_calibration.json \
+  --dataset-section test \
+  --skip-cloud-ratio 0.01 \
+  --min-steps 10 \
+  --max-steps 50 \
+  --output-json eval/diffusion_rs_transformer_v2_adaptive_metrics.json
+
+# 标准 DDPM + Transformer v3
+# 训练脚本会在每个 epoch 结束时自动执行 DDPM 评估和可视化缓存。
+# v2 adaptive 评估脚本使用 Residual Shifting 采样，不适配 v3 checkpoint。
 
 # 区域评估
 python scripts/eval_regions.py --config configs/eval.yaml
@@ -147,6 +178,14 @@ python scripts/eval_regions.py --config configs/eval.yaml
 - `model.patch_size`: patch 大小（输入高宽需能被 patch size 整除，代码会自动 pad）
 - `model.refine_channels`: 输出端局部卷积细化通道数
 - `train.batch_size`: 建议从较小值开始，Transformer 显存占用明显高于当前 U-Net
+
+### Transformer v3 标准 DDPM 配置
+- `scripts/train_diffusion_rs_transformer_v3.py` 可复用 `configs/diffusion_rs_transformer_v2_13ch_wide.yaml`。
+- `diffusion.timesteps`: 扩散步数；默认 1000。
+- `diffusion.schedule_type`: DDPM beta 调度类型，支持 `linear`/`cosine`；现有 v2 配置中的 `linear` 会被解释为 DDPM linear beta schedule。
+- `diffusion.beta_start`/`beta_end`: 可选；未配置时默认 `1.0e-4`/`2.0e-2`。
+- `schedule.x0_clip_min`/`x0_clip_max`: 预测 `x0` 的截断范围。
+- `sampling.init_method`: 可选，默认 `noise`；也可设为 `noisy_input` 或 `mixed`。
 
 ## 常见问题
 ### 1. DDP 卡在验证/epoch 切换

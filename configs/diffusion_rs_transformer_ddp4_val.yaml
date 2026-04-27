@@ -56,8 +56,21 @@ sen12ms:
   s2_clip_max: 10000.0
   s1_db_min: -25.0
   s1_db_max: 0.0
-  split_csv: "supplementary_SEN12MSCR/outdated_train_val_test_patches.csv"
+  split_csv: "/home/ps/KXShen/syncfolder/project0103/supplementary_SEN12MSCR/splits.csv"
   split: "train"
+
+val:
+  batch_size: 4
+  dataset: "sen12mscr_raw"
+  root: "/home/data/KXShen/SEN12MSCR/SEN12MSCR"
+  image_ext: ".tif"
+  bands: [1, 2, 3]
+  s2_clip_min: 0.0
+  s2_clip_max: 10000.0
+  s1_db_min: -25.0
+  s1_db_max: 0.0
+  split_csv: "/home/ps/KXShen/syncfolder/project0103/supplementary_SEN12MSCR/splits.csv"
+  split: "val"
 
 test:
   batch_size: 4
@@ -69,8 +82,8 @@ test:
   s2_clip_max: 10000.0
   s1_db_min: -25.0
   s1_db_max: 0.0
-  split_csv: "supplementary_SEN12MSCR/outdated_train_val_test_patches.csv"
-  split: "val"
+  split_csv: "/home/ps/KXShen/syncfolder/project0103/supplementary_SEN12MSCR/splits.csv"
+  split: "test"
 
 output:
   save_every_epochs: 20

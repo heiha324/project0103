@@ -18,6 +18,7 @@ except Exception:  # pragma: no cover
     tqdm = None
 
 from sarcloud.models.rsnet import RSNet
+from sarcloud.data.sen12ms_cr import Sen12MSCRRawDataset
 from sarcloud.utils.alpha import build_alpha
 from sarcloud.utils.config import load_config
 from sarcloud.utils.image import load_array, load_tif, normalize_s2, select_bands, _ensure_chw
@@ -64,9 +65,27 @@ def main() -> None:
 
     if dataset_type == "sen12mscr_raw":
         root = Path(data_cfg["root"])
-        pattern = data_cfg.get("cloudy_glob", "ROIs*_s2_cloudy/s2_cloudy_*/*.tif")
-        cloudy_paths = sorted(root.glob(pattern))
+        split_csv = data_cfg.get("split_csv")
+        split = data_cfg.get("split")
+        if split_csv:
+            raw_dataset = Sen12MSCRRawDataset(
+                root=root,
+                split_csv=split_csv,
+                split=split,
+                bands=data_cfg.get("bands"),
+                s2_clip_min=data_cfg.get("s2_clip_min", 0.0),
+                s2_clip_max=data_cfg.get("s2_clip_max", 10000.0),
+                s1_db_min=data_cfg.get("s1_db_min", -25.0),
+                s1_db_max=data_cfg.get("s1_db_max", 0.0),
+                roi_glob=data_cfg.get("roi_glob"),
+            )
+            cloudy_paths = [sample.s2_cloudy_path for sample in raw_dataset.samples]
+        else:
+            pattern = data_cfg.get("cloudy_glob", "ROIs*_s2_cloudy/s2_cloudy_*/*.tif")
+            cloudy_paths = sorted(root.glob(pattern))
         if not cloudy_paths:
+            if split_csv:
+                raise RuntimeError(f"No cloudy samples found via split_csv={split_csv} split={split!r}")
             raise RuntimeError(f"No cloudy samples found with pattern {pattern} in {root}")
         iterator = cloudy_paths
         if tqdm is not None:
