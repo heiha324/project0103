@@ -12,10 +12,10 @@ model:
   x_channels: 13
   y_channels: 13
   s_channels: 2
-  embed_dim: 512
+  embed_dim: 256 
   depth: 8
-  num_heads: 16
-  patch_size: 16
+  num_heads: 8
+  patch_size: 4
   time_dim: 256
   mlp_ratio: 4.0
   dropout: 0.0
@@ -25,14 +25,19 @@ model:
 
 train:
   batch_size: 12
-  num_epochs: 2000
+  num_epochs: 1000
   lr: 1.0e-4
+  ddpm_lr_scale: 0.25
   weight_decay: 1.0e-4
   ema_decay: 0.999
   amp: false
-  grad_clip: 1.0
+  amp_dtype: bf16
+  grad_clip: 0.5
+  nonfinite_grad_patience: 20
+  nonfinite_grad_log_limit: 8
+  sanitize_nonfinite_grads: true
   use_scheduler: true
-  warmup_epochs: 5
+  warmup_epochs: 10
 
 loss:
   recon_weight: 1.0
@@ -89,7 +94,7 @@ output:
   save_every_epochs: 20
   psnr_eval_steps: [5, 10, 20, 50]
   psnr_eval_max_batches: 0
-  dir: "/home/data/KXShen/model/project0103/diffusion_rs_transformer_v2_13ch_wide_sen12mscr"
+  dir: "/home/data/KXShen/model/project0103/diffusion_rs_transformer_v3_13ch_wide_sen12mscr"
 
 vis:
   num_samples: 8

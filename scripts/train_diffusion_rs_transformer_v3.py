@@ -27,13 +27,13 @@ from torch.utils.data.distributed import DistributedSampler
 import train_diffusion_rs as base
 
 from sarcloud.diffusion.gaussian import GaussianDiffusion
-from sarcloud.diffusion.losses import grad_l1_loss
-from sarcloud.diffusion.sampling import sample_batch
+from sarcloud.diffusion.losses import gradient_map
+from sarcloud.diffusion.timesteps import make_time_sequence
 from sarcloud.training.ema import EMA
 from sarcloud.utils.config import load_config
 
 
-SAMPLING_METRIC_PROTOCOL = f"{base.METRIC_PROTOCOL}:sampling"
+SAMPLING_METRIC_PROTOCOL = f"{base.METRIC_PROTOCOL}:sampling:v3_pure_noise_v1"
 
 
 def _valid_group_count(channels: int, max_groups: int = 32) -> int:
@@ -49,6 +49,186 @@ def _align_channels(channels: int, num_heads: int) -> int:
     if num_heads <= 0:
         raise ValueError(f"num_heads must be positive, got {num_heads}")
     return max(num_heads, math.ceil(channels / num_heads) * num_heads)
+
+
+def _v3_output_base_dir(path: Path) -> Path:
+    name = path.name
+    if "diffusion_rs_transformer_v2" in name:
+        name = name.replace("diffusion_rs_transformer_v2", "diffusion_rs_transformer_v3", 1)
+    return path.with_name(name)
+
+
+def _resolve_amp_dtype(
+    train_cfg: dict[str, Any],
+    device: torch.device,
+    amp_enabled: bool,
+) -> torch.dtype:
+    """Resolve autocast dtype from train.amp_dtype."""
+    dtype_name = str(train_cfg.get("amp_dtype", "bf16")).lower()
+    aliases = {
+        "bf16": torch.bfloat16,
+        "bfloat16": torch.bfloat16,
+        "fp16": torch.float16,
+        "float16": torch.float16,
+        "half": torch.float16,
+    }
+    if dtype_name not in aliases:
+        raise ValueError(f"Unknown train.amp_dtype: {dtype_name}")
+
+    amp_dtype = aliases[dtype_name]
+    if (
+        amp_enabled
+        and device.type == "cuda"
+        and amp_dtype == torch.bfloat16
+        and not torch.cuda.is_bf16_supported()
+    ):
+        raise RuntimeError("train.amp_dtype=bf16 requires CUDA bf16 support.")
+    if amp_enabled and device.type == "cpu" and amp_dtype == torch.float16:
+        raise RuntimeError("train.amp_dtype=fp16 is not supported for CPU autocast; use bf16.")
+    return amp_dtype
+
+
+def _extract_coeff(a: torch.Tensor, t: torch.Tensor, shape: torch.Size) -> torch.Tensor:
+    out = a.gather(0, t)
+    return out.view(-1, *([1] * (len(shape) - 1)))
+
+
+def _expand_weight_as(weight: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    if weight.ndim == 3:
+        weight = weight.unsqueeze(1)
+    if weight.shape != target.shape:
+        weight = weight.expand_as(target)
+    return weight
+
+
+def _weighted_mean_preserve_scale(loss: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
+    weight = _expand_weight_as(weight, loss)
+    return (loss * weight).mean()
+
+
+def _weighted_grad_l1_preserve_scale(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    weight: torch.Tensor,
+) -> torch.Tensor:
+    grad_pred = gradient_map(pred)
+    grad_target = gradient_map(target)
+    weight = _expand_weight_as(weight, grad_pred)
+    return (torch.abs(grad_pred - grad_target) * weight).mean()
+
+
+def _ddpm_aux_weight(
+    diffusion: GaussianDiffusion,
+    t: torch.Tensor,
+    shape: torch.Size,
+    base_weight: torch.Tensor,
+) -> torch.Tensor:
+    sqrt_alpha_bar = _extract_coeff(diffusion.sqrt_alphas_cumprod, t, shape)
+    sqrt_alpha_bar = sqrt_alpha_bar.to(device=base_weight.device, dtype=base_weight.dtype)
+    return base_weight * sqrt_alpha_bar.detach()
+
+
+def _stable_ddpm_losses(
+    diffusion: GaussianDiffusion,
+    cfg: dict[str, Any],
+    x_t: torch.Tensor,
+    t: torch.Tensor,
+    eps_pred: torch.Tensor,
+    noise: torch.Tensor,
+    x0: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    x_t_f = x_t.float()
+    eps_pred_f = eps_pred.float()
+    noise_f = noise.float()
+    x0_f = x0.float()
+
+    loss_diff = F.mse_loss(eps_pred_f, noise_f)
+    x0_pred = diffusion.predict_x0_from_eps(x_t_f, t, eps_pred_f, clip=False)
+    x0_pred = x0_pred.clamp(diffusion.x0_clip_min, diffusion.x0_clip_max)
+
+    aux_time_weight = base.compute_time_weight(
+        t,
+        diffusion.timesteps,
+        min_weight=cfg["loss"].get("aux_min_weight", 0.1),
+        max_weight=cfg["loss"].get("aux_max_weight", 1.0),
+    ).to(device=x0_pred.device, dtype=x0_pred.dtype)
+    aux_weight = _ddpm_aux_weight(diffusion, t, x0_pred.shape, aux_time_weight)
+
+    loss_recon_raw = F.l1_loss(x0_pred, x0_f, reduction="none")
+    loss_recon = _weighted_mean_preserve_scale(loss_recon_raw, aux_weight)
+    loss_grad = _weighted_grad_l1_preserve_scale(x0_pred, x0_f, aux_weight)
+
+    recon_weight = cfg["loss"].get("recon_weight", 1.0)
+    grad_weight = cfg["loss"].get("grad_weight", 0.5)
+    loss = loss_diff + recon_weight * loss_recon + grad_weight * loss_grad
+    return loss, loss_diff, loss_recon, loss_grad, x0_pred
+
+
+def _format_nonfinite_gradient_summary(
+    model: torch.nn.Module,
+    limit: int,
+) -> list[str]:
+    summaries: list[str] = []
+    for name, param in model.named_parameters():
+        grad = param.grad
+        if grad is None:
+            continue
+        grad_detached = grad.detach()
+        if bool(torch.isfinite(grad_detached).all().item()):
+            continue
+        nan_count = int(torch.isnan(grad_detached).sum().item())
+        inf_count = int(torch.isinf(grad_detached).sum().item())
+        finite_abs_max = float(
+            grad_detached.nan_to_num(nan=0.0, posinf=0.0, neginf=0.0).abs().max().item()
+        )
+        summaries.append(
+            f"{name}: nan={nan_count} inf={inf_count} finite_abs_max={finite_abs_max:.4e}"
+        )
+        if len(summaries) >= limit:
+            break
+    if not summaries:
+        summaries.append("no local nonfinite gradient found; another distributed rank reported it")
+    return summaries
+
+
+def _sanitize_nonfinite_gradients(
+    model: torch.nn.Module,
+    limit: int,
+) -> tuple[int, int, list[str]]:
+    summaries: list[str] = []
+    tensor_count = 0
+    value_count = 0
+    for name, param in model.named_parameters():
+        grad = param.grad
+        if grad is None:
+            continue
+        finite_mask = torch.isfinite(grad)
+        if bool(finite_mask.all().item()):
+            continue
+        nonfinite_mask = ~finite_mask
+        nan_count = int(torch.isnan(grad).sum().item())
+        inf_count = int(torch.isinf(grad).sum().item())
+        value_count += int(nonfinite_mask.sum().item())
+        tensor_count += 1
+        finite_abs_max = float(grad.detach().nan_to_num(nan=0.0, posinf=0.0, neginf=0.0).abs().max().item())
+        if len(summaries) < limit:
+            summaries.append(
+                f"{name}: nan={nan_count} inf={inf_count} finite_abs_max={finite_abs_max:.4e}"
+            )
+        grad.masked_fill_(nonfinite_mask, 0.0)
+    return tensor_count, value_count, summaries
+
+
+def _group_norm_fp32(norm: nn.GroupNorm, x: torch.Tensor) -> torch.Tensor:
+    x_dtype = x.dtype
+    out = F.group_norm(
+        x.float(),
+        norm.num_groups,
+        norm.weight.float() if norm.weight is not None else None,
+        norm.bias.float() if norm.bias is not None else None,
+        norm.eps,
+    )
+    return out.to(dtype=x_dtype)
 
 
 class SinusoidalPosEmb(nn.Module):
@@ -81,9 +261,10 @@ class LayerNorm2d(nn.Module):
         self.bias = nn.Parameter(torch.zeros(dim))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = x.permute(0, 2, 3, 1)
-        x = F.layer_norm(x, (self.dim,), self.weight, self.bias, self.eps)
-        return x.permute(0, 3, 1, 2)
+        x_dtype = x.dtype
+        x = x.permute(0, 2, 3, 1).float()
+        x = F.layer_norm(x, (self.dim,), self.weight.float(), self.bias.float(), self.eps)
+        return x.to(dtype=x_dtype).permute(0, 3, 1, 2)
 
 
 class AdaLayerNorm2d(nn.Module):
@@ -98,8 +279,13 @@ class AdaLayerNorm2d(nn.Module):
         )
 
     def forward(self, x: torch.Tensor, t_emb: torch.Tensor) -> torch.Tensor:
-        shift, scale = self.modulation(t_emb).chunk(2, dim=-1)
-        return self.norm(x) * (1.0 + scale[:, :, None, None]) + shift[:, :, None, None]
+        x_dtype = x.dtype
+        with torch.amp.autocast(t_emb.device.type, enabled=False):
+            shift, scale = self.modulation(t_emb.float()).chunk(2, dim=-1)
+            shift = shift.clamp(-10.0, 10.0)
+            scale = scale.clamp(-5.0, 5.0)
+            out = self.norm(x).float() * (1.0 + scale[:, :, None, None]) + shift[:, :, None, None]
+        return out.to(dtype=x_dtype)
 
 
 class ConvResidualBlock(nn.Module):
@@ -114,8 +300,8 @@ class ConvResidualBlock(nn.Module):
         self.skip = nn.Conv2d(in_ch, out_ch, kernel_size=1) if in_ch != out_ch else nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        h = self.conv1(F.silu(self.norm1(x)))
-        h = self.conv2(F.silu(self.norm2(h)))
+        h = self.conv1(F.silu(_group_norm_fp32(self.norm1, x)))
+        h = self.conv2(F.silu(_group_norm_fp32(self.norm2, h)))
         return h + self.skip(x)
 
 
@@ -205,6 +391,7 @@ class WindowAttention2d(nn.Module):
         return x.view(batch_size, channels, height, width)
 
     def forward(self, x: torch.Tensor, context: torch.Tensor | None = None) -> torch.Tensor:
+        x_dtype = x.dtype
         x_pad, orig_h, orig_w = self._pad(x)
         batch_size, _channels, padded_h, padded_w = x_pad.shape
         query = self._window_partition(x_pad)
@@ -217,7 +404,11 @@ class WindowAttention2d(nn.Module):
             context_pad, _, _ = self._pad(context)
             key_value = self._window_partition(context_pad)
 
-        out, _ = self.attn(query, key_value, key_value, need_weights=False)
+        with torch.amp.autocast(query.device.type, enabled=False):
+            query_f = query.float()
+            key_value_f = key_value.float()
+            out, _ = self.attn(query_f, key_value_f, key_value_f, need_weights=False)
+        out = out.to(dtype=x_dtype)
         out = self._window_reverse(out, batch_size, padded_h, padded_w)
         return out[:, :, :orig_h, :orig_w]
 
@@ -568,21 +759,51 @@ def _sample_batch_ddpm(
     s: torch.Tensor,
     steps: int,
     schedule_cfg: dict[str, Any],
+    generator: torch.Generator | None = None,
+    init_noise: torch.Tensor | None = None,
 ) -> torch.Tensor:
+    """DDPM/DDIM sampling for v3, with optional fixed init noise for fair step comparison."""
     init_method = str(schedule_cfg.get("init_method", "noise"))
-    if init_method not in {"noise", "noisy_input", "mixed"}:
-        raise ValueError(f"Unknown sampling init_method: {init_method}")
-    return sample_batch(
-        model,
-        diffusion,
-        y,
-        s,
-        steps=steps,
-        schedule_cfg=schedule_cfg,
-        init_method=init_method,  # type: ignore[arg-type]
-        noise_ratio=float(schedule_cfg.get("noise_ratio", 1.0)),
-        init_timestep_ratio=float(schedule_cfg.get("init_timestep_ratio", 1.0)),
-    )
+    if init_method != "noise":
+        raise ValueError("DDPM v3 pure-noise sampling only supports sampling.init_method='noise'.")
+    device = y.device
+
+    if init_noise is not None:
+        if init_noise.shape != y.shape:
+            raise ValueError(
+                f"init_noise shape mismatch: {tuple(init_noise.shape)} vs {tuple(y.shape)}"
+            )
+        noise = init_noise.to(device=device, dtype=y.dtype)
+    else:
+        noise = torch.randn(y.shape, device=device, dtype=y.dtype, generator=generator)
+
+    x = noise
+    t_seq = make_time_sequence(diffusion.timesteps - 1, 0, steps)
+
+    method = schedule_cfg.get("method", "ddim")
+    eta = float(schedule_cfg.get("eta", 0.0))
+    use_ddim = method != "ddpm" or steps < diffusion.timesteps
+
+    for step, t in enumerate(t_seq):
+        t_batch = torch.full((y.size(0),), t, device=device, dtype=torch.long)
+        t_prev = t_seq[step + 1] if step + 1 < len(t_seq) else None
+        t_prev_batch = (
+            torch.full((y.size(0),), t_prev, device=device, dtype=torch.long)
+            if t_prev is not None
+            else None
+        )
+        eps = model(x, t_batch, y, s)
+        if use_ddim:
+            x = diffusion.ddim_step(x, t_batch, t_prev_batch, eps, eta=eta)
+        else:
+            x = diffusion.p_sample(x, t_batch, eps)
+    return x
+
+
+def _make_sampling_generator(device: torch.device, seed: int) -> torch.Generator:
+    generator = torch.Generator(device=device)
+    generator.manual_seed(int(seed))
+    return generator
 
 
 def evaluate(
@@ -593,6 +814,7 @@ def evaluate(
     device: torch.device,
     amp_device: str,
     amp_enabled: bool,
+    amp_dtype: torch.dtype,
     desc: str,
     max_batches: int,
     use_tqdm: bool,
@@ -634,32 +856,21 @@ def evaluate(
             noise = torch.randn(x0.shape, device=device, generator=eval_rng)
             x_t = diffusion.q_sample(x0, t, noise)
 
-            with torch.amp.autocast(amp_device, enabled=amp_enabled):
+            with torch.amp.autocast(amp_device, dtype=amp_dtype, enabled=amp_enabled):
                 eps_pred = model(x_t, t, y, s1)
-                loss_diff = F.mse_loss(eps_pred, noise)
+            loss, loss_diff, loss_recon, loss_grad, x0_pred = _stable_ddpm_losses(
+                diffusion,
+                cfg,
+                x_t,
+                t,
+                eps_pred,
+                noise,
+                x0,
+            )
 
-                x0_pred = diffusion.predict_x0_from_eps(x_t, t, eps_pred, clip=False)
-                x0_pred = x0_pred.clamp(diffusion.x0_clip_min, diffusion.x0_clip_max)
-
-                aux_time_weight = base.compute_time_weight(
-                    t,
-                    diffusion.timesteps,
-                    min_weight=cfg["loss"].get("aux_min_weight", 0.1),
-                    max_weight=cfg["loss"].get("aux_max_weight", 1.0),
-                )
-                loss_recon_raw = F.l1_loss(x0_pred, x0, reduction="none")
-                grad_weight_map = torch.ones_like(x0[:, :1, :, :])
-                weight_map = grad_weight_map * aux_time_weight
-                loss_recon = base.weighted_mean(loss_recon_raw, aux_time_weight)
-                loss_grad = grad_l1_loss(x0_pred, x0, weight_map)
-
-                recon_weight = cfg["loss"].get("recon_weight", 1.0)
-                grad_weight = cfg["loss"].get("grad_weight", 0.5)
-                loss = loss_diff + recon_weight * loss_recon + grad_weight * loss_grad
-
-                x0_p = x0_pred.detach().float()
-                x0_t = x0.detach().float()
-                batch_size = base.accumulate_image_metric_totals(totals, x0_p, x0_t)
+            x0_p = x0_pred.detach().float()
+            x0_t = x0.detach().float()
+            batch_size = base.accumulate_image_metric_totals(totals, x0_p, x0_t)
 
             totals["loss"] += float(loss.item())
             totals["diff"] += float(loss_diff.item())
@@ -729,7 +940,9 @@ def save_vis_samples(
             scale_percentiles = [1.0, 99.0]
         scale_percentiles = (float(scale_percentiles[0]), float(scale_percentiles[1]))
 
-        rng = random.SystemRandom()
+        sample_seed = int(vis_cfg.get("sample_seed", base_seed + 1000))
+        fixed_indices = bool(vis_cfg.get("fixed_indices", True))
+        rng = random.Random(sample_seed) if fixed_indices else random.SystemRandom()
         sample_count = min(num_samples, len(dataset))
         indices = rng.sample(range(len(dataset)), k=sample_count)
 
@@ -744,6 +957,14 @@ def save_vis_samples(
             backup = base.apply_ema_weights(model, ema)
 
         sampling_cfg = cfg.get("sampling", {})
+        fixed_noise_across_steps = bool(sampling_cfg.get("fixed_noise_across_steps", True))
+        sampling_seed = int(sampling_cfg.get("seed", base_seed + 20000))
+        sampling_generator = _make_sampling_generator(device, sampling_seed)
+        init_noise = (
+            torch.randn(x0.shape, device=device, dtype=x0.dtype, generator=sampling_generator)
+            if fixed_noise_across_steps
+            else None
+        )
         vis_root = out_dir / "vis_npy"
         vis_dir = vis_root / f"epoch_{epoch+1:03d}"
         vis_dir.mkdir(parents=True, exist_ok=True)
@@ -764,6 +985,8 @@ def save_vis_samples(
             "sample_indices": indices,
             "rgb_indices": list(rgb_indices),
             "vis_steps": [int(step) for step in vis_steps],
+            "fixed_indices": fixed_indices,
+            "sample_seed": sample_seed,
             "auto_scale": auto_scale,
             "scale_percentiles": [float(scale_percentiles[0]), float(scale_percentiles[1])],
             "auto_scale_ref": auto_scale_ref,
@@ -772,6 +995,9 @@ def save_vis_samples(
             "sampling": {
                 "method": sampling_cfg.get("method", "ddim"),
                 "eta": float(sampling_cfg.get("eta", 0.0)),
+                "init_method": sampling_cfg.get("init_method", "noise"),
+                "fixed_noise_across_steps": fixed_noise_across_steps,
+                "seed": sampling_seed,
             },
         }
 
@@ -784,6 +1010,8 @@ def save_vis_samples(
                     s1,
                     steps=int(step_cnt),
                     schedule_cfg=sampling_cfg,
+                    generator=sampling_generator if not fixed_noise_across_steps else None,
+                    init_noise=init_noise,
                 )
                 pred_cpu = torch.clamp(pred.cpu(), 0.0, 1.0)
 
@@ -824,6 +1052,37 @@ def save_vis_samples(
         )
         (vis_root / "latest_epoch.txt").write_text(f"{epoch+1:03d}\n", encoding="utf-8")
 
+        base.log_message(
+            f"Saved DDPM v3 visualization arrays to {vis_dir}",
+            logger,
+            console=True,
+            use_tqdm=use_tqdm,
+        )
+
+        try:
+            from render_vis_samples import render_epoch
+
+            vis_png_dir = out_dir / "vis"
+            png_path = render_epoch(
+                vis_dir,
+                vis_png_dir,
+                output_name=f"diffusion_rs_transformer_v3_vis_epoch_{epoch+1:03d}.png",
+                latest_name="diffusion_rs_transformer_v3_vis.png",
+            )
+            base.log_message(
+                f"Saved DDPM v3 visualization to {png_path}",
+                logger,
+                console=True,
+                use_tqdm=use_tqdm,
+            )
+        except Exception as exc:
+            base.log_message(
+                f"Visualization render failed: {exc}",
+                logger,
+                console=True,
+                use_tqdm=use_tqdm,
+            )
+
     except Exception as exc:
         base.log_message(f"[Vis] Failed to save visualization samples: {exc}", logger, console=True, use_tqdm=use_tqdm)
     finally:
@@ -839,6 +1098,7 @@ def evaluate_sampling_steps(
     device: torch.device,
     amp_device: str,
     amp_enabled: bool,
+    amp_dtype: torch.dtype,
     sampling_steps: list[int],
     desc: str,
     max_batches: int,
@@ -852,7 +1112,7 @@ def evaluate_sampling_steps(
     if use_ema and ema is not None:
         backup = base.apply_ema_weights(model, ema)
 
-    metric_keys = [
+    image_metric_keys = [
         "mae",
         "mse",
         "rmse",
@@ -866,6 +1126,8 @@ def evaluate_sampling_steps(
         "uiqi",
         "rase",
     ]
+    extra_metric_keys = ["pred_mean", "target_mean", "cloudy_mean"]
+    metric_keys = image_metric_keys + extra_metric_keys
     totals: dict[int, dict[str, float]] = {
         int(step): {k: 0.0 for k in metric_keys} for step in sampling_steps
     }
@@ -877,6 +1139,11 @@ def evaluate_sampling_steps(
         iterator = base.tqdm(loader, desc=desc, ncols=80, leave=False)
 
     sampling_cfg = cfg.get("sampling", {})
+    fixed_noise_across_steps = bool(sampling_cfg.get("fixed_noise_across_steps", True))
+    sampling_seed = int(sampling_cfg.get("seed", cfg.get("seed", 42) + 30000))
+    if ddp:
+        sampling_seed += dist.get_rank()
+    sampling_generator = _make_sampling_generator(device, sampling_seed)
     model.eval()
     with torch.no_grad():
         for step_idx, (s1, s2_cloudy, s2_clear, _alpha) in enumerate(iterator, start=1):
@@ -887,9 +1154,14 @@ def evaluate_sampling_steps(
             y = s2_cloudy.to(device)
             x0 = s2_clear.to(device)
             batch_size = int(x0.size(0))
+            init_noise = (
+                torch.randn(x0.shape, device=device, dtype=x0.dtype, generator=sampling_generator)
+                if fixed_noise_across_steps
+                else None
+            )
 
             for step_cnt in sampling_steps:
-                with torch.amp.autocast(amp_device, enabled=amp_enabled):
+                with torch.amp.autocast(amp_device, dtype=amp_dtype, enabled=amp_enabled):
                     x0_pred = _sample_batch_ddpm(
                         model,
                         diffusion,
@@ -897,6 +1169,8 @@ def evaluate_sampling_steps(
                         s1,
                         steps=int(step_cnt),
                         schedule_cfg=sampling_cfg,
+                        generator=sampling_generator if not fixed_noise_across_steps else None,
+                        init_noise=init_noise,
                     )
                     x0_pred = x0_pred.clamp(0.0, 1.0)
 
@@ -906,8 +1180,11 @@ def evaluate_sampling_steps(
                         totals[int(step_cnt)],
                         x0_p,
                         x0_t,
-                        metric_keys=tuple(metric_keys),
+                        metric_keys=tuple(image_metric_keys),
                     )
+                    totals[int(step_cnt)]["pred_mean"] += float(x0_p.mean().item()) * batch_size
+                    totals[int(step_cnt)]["target_mean"] += float(x0_t.mean().item()) * batch_size
+                    totals[int(step_cnt)]["cloudy_mean"] += float(y.detach().float().mean().item()) * batch_size
 
             sample_count += batch_size
 
@@ -944,7 +1221,7 @@ def evaluate_sampling_steps(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Train Residual Shifting Transformer Model")
+    parser = argparse.ArgumentParser(description="Train DDPM Transformer v3 Model")
     parser.add_argument("--config", type=str, default="configs/diffusion_rs_transformer.yaml")
     parser.add_argument("--resume", type=str, default=None, help="Path to checkpoint to resume from")
     args = parser.parse_args()
@@ -1061,7 +1338,11 @@ def main() -> None:
         x0_clip_max=schedule_cfg.get("x0_clip_max", 1.0),
     )
 
-    base_lr = cfg["train"].get("lr", 1e-4)
+    configured_lr = float(cfg["train"].get("lr", 1e-4))
+    ddpm_lr_scale = float(cfg["train"].get("ddpm_lr_scale", 0.5))
+    base_lr = configured_lr * ddpm_lr_scale
+    if "ddpm_max_lr" in cfg["train"]:
+        base_lr = min(base_lr, float(cfg["train"]["ddpm_max_lr"]))
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=base_lr,
@@ -1093,7 +1374,12 @@ def main() -> None:
 
     amp_enabled = bool(cfg["train"].get("amp", False))
     amp_device = "cuda" if device.type == "cuda" else "cpu"
-    scaler = torch.amp.GradScaler(amp_device, enabled=amp_enabled) if amp_enabled else None
+    amp_dtype = _resolve_amp_dtype(cfg["train"], device, amp_enabled)
+    scaler = (
+        torch.amp.GradScaler(amp_device, enabled=True)
+        if amp_enabled and amp_dtype == torch.float16
+        else None
+    )
 
     ema_model = model.module if ddp else model
     ema = EMA(ema_model, decay=cfg["train"].get("ema_decay", 0.999))
@@ -1215,7 +1501,9 @@ def main() -> None:
     vis_cfg = cfg.setdefault("vis", {})
     vis_cfg["steps"] = [5, 10, 20, 50, 100]
 
-    out_dir = Path(output_cfg["dir"])
+    configured_out_dir = Path(output_cfg["dir"])
+    output_base_dir = _v3_output_base_dir(configured_out_dir)
+    out_dir = output_base_dir
     fmt = output_cfg.get("timestamp_format", "%Y%m%d_%H%M%S")
     run_ts = time.strftime(fmt) if is_main else ""
 
@@ -1242,18 +1530,55 @@ def main() -> None:
         else:
             log_path = log_dir / f"{out_dir.name}_{run_ts}.log"
 
+    spike_guard_enabled = bool(cfg["train"].get("loss_spike_guard", True))
+    spike_guard_min_steps = int(cfg["train"].get("loss_spike_guard_min_steps", 200))
+    spike_guard_factor = float(cfg["train"].get("loss_spike_guard_factor", 10.0))
+    spike_guard_floor = float(cfg["train"].get("loss_spike_guard_floor", 1.0))
+    spike_guard_beta = float(cfg["train"].get("loss_spike_guard_beta", 0.98))
+    nonfinite_grad_patience = max(1, int(cfg["train"].get("nonfinite_grad_patience", 20)))
+    nonfinite_grad_log_limit = max(1, int(cfg["train"].get("nonfinite_grad_log_limit", 8)))
+    sanitize_nonfinite_grads = bool(
+        cfg["train"].get("sanitize_nonfinite_grads", amp_enabled and amp_dtype == torch.bfloat16)
+    )
+
     logger = None
     if is_main and log_path is not None:
-        logger = logging.getLogger("train_diffusion_rs_transformer")
+        logger = logging.getLogger("train_diffusion_rs_transformer_v3")
         logger.setLevel(logging.INFO)
         logger.handlers = []
         file_handler = logging.FileHandler(log_path, encoding="utf-8")
         file_handler.setFormatter(logging.Formatter("%(asctime)s %(message)s", "%Y-%m-%d %H:%M:%S"))
         logger.addHandler(file_handler)
-        base.log_message(f"[Residual Shifting Transformer] 运行时间戳: {run_ts}", logger, console=False, use_tqdm=False)
+        base.log_message(f"[DDPM Transformer v3] 运行时间戳: {run_ts}", logger, console=False, use_tqdm=False)
+        if output_base_dir != configured_out_dir:
+            base.log_message(
+                f"v3输出基目录: {configured_out_dir} -> {output_base_dir}",
+                logger,
+                console=False,
+                use_tqdm=False,
+            )
         base.log_message(f"输出目录: {out_dir}", logger, console=False, use_tqdm=False)
         base.log_message(f"World size: {world_size}, Rank: {rank}", logger, console=False, use_tqdm=False)
         base.log_message(f"配置文件: {args.config}", logger, console=False, use_tqdm=False)
+        base.log_message(
+            f"AMP: enabled={amp_enabled}, dtype={str(amp_dtype).replace('torch.', '')}, grad_scaler={scaler is not None}",
+            logger,
+            console=False,
+            use_tqdm=False,
+        )
+        base.log_message(
+            f"LR: configured={configured_lr:.2e}, effective={base_lr:.2e}, ddpm_lr_scale={ddpm_lr_scale:.3f}",
+            logger,
+            console=False,
+            use_tqdm=False,
+        )
+        base.log_message(
+            f"BF16 safeguards: sanitize_nonfinite_grads={sanitize_nonfinite_grads}, "
+            f"nonfinite_grad_patience={nonfinite_grad_patience}",
+            logger,
+            console=False,
+            use_tqdm=False,
+        )
         base.log_message(f"周期保存间隔: {save_every_epochs} epochs", logger, console=False, use_tqdm=False)
         base.log_message(
             f"PSNR评估步数: {psnr_eval_steps} (max_batches={psnr_eval_max_batches}, 0=全量)",
@@ -1268,6 +1593,12 @@ def main() -> None:
             use_tqdm=False,
         )
 
+    global_step = 0
+    loss_ema: float | None = None
+    skipped_steps_total = 0
+    consecutive_nonfinite_grad_steps = 0
+    sanitized_grad_steps_total = 0
+
     for epoch in range(start_epoch, num_epochs):
         model.train()
         if ddp and sampler is not None:
@@ -1279,6 +1610,8 @@ def main() -> None:
 
         epoch_loss = 0.0
         steps = 0
+        skipped_steps = 0
+        sanitized_grad_steps = 0
         for s1, s2_cloudy, s2_clear, _alpha in iterator:
             s1 = s1.to(device)
             y = s2_cloudy.to(device)
@@ -1288,30 +1621,18 @@ def main() -> None:
             noise = torch.randn_like(x0)
             x_t = diffusion.q_sample(x0, t, noise)
 
-            aux_time_weight = base.compute_time_weight(
-                t,
-                diffusion.timesteps,
-                min_weight=cfg["loss"].get("aux_min_weight", 0.1),
-                max_weight=cfg["loss"].get("aux_max_weight", 1.0),
-            )
-
             optimizer.zero_grad(set_to_none=True)
-            with torch.amp.autocast(amp_device, enabled=amp_enabled):
+            with torch.amp.autocast(amp_device, dtype=amp_dtype, enabled=amp_enabled):
                 eps_pred = model(x_t, t, y, s1)
-                loss_diff = F.mse_loss(eps_pred, noise)
-
-                x0_pred = diffusion.predict_x0_from_eps(x_t, t, eps_pred, clip=False)
-                x0_pred = x0_pred.clamp(diffusion.x0_clip_min, diffusion.x0_clip_max)
-
-                loss_recon_raw = F.l1_loss(x0_pred, x0, reduction="none")
-                grad_weight_map = torch.ones_like(x0[:, :1, :, :])
-                weight_map = grad_weight_map * aux_time_weight
-                loss_recon = base.weighted_mean(loss_recon_raw, aux_time_weight)
-                loss_grad = grad_l1_loss(x0_pred, x0, weight_map)
-
-                recon_weight = cfg["loss"].get("recon_weight", 1.0)
-                grad_weight = cfg["loss"].get("grad_weight", 0.5)
-                loss = loss_diff + recon_weight * loss_recon + grad_weight * loss_grad
+            loss, loss_diff, loss_recon, loss_grad, x0_pred = _stable_ddpm_losses(
+                diffusion,
+                cfg,
+                x_t,
+                t,
+                eps_pred,
+                noise,
+                x0,
+            )
 
             loss_is_finite = torch.isfinite(loss.detach())
             if ddp:
@@ -1363,29 +1684,178 @@ def main() -> None:
                     dist.destroy_process_group()
                 raise RuntimeError(f"NaN/Inf loss at epoch {epoch+1} step {steps}")
 
-            if amp_enabled:
-                assert scaler is not None
+            loss_value = float(loss.detach().item())
+            spike_threshold = math.inf
+            skip_step = False
+            if (
+                spike_guard_enabled
+                and loss_ema is not None
+                and global_step >= spike_guard_min_steps
+            ):
+                spike_threshold = max(spike_guard_floor, loss_ema * spike_guard_factor)
+                skip_step = loss_value > spike_threshold
+            if ddp:
+                flag = torch.tensor(float(skip_step), device=device)
+                dist.all_reduce(flag, op=dist.ReduceOp.MAX)
+                skip_step = flag.item() > 0.0
+
+            if skip_step:
+                skipped_steps += 1
+                skipped_steps_total += 1
+                epoch_loss += loss_value
+                steps += 1
+                global_step += 1
+                optimizer.zero_grad(set_to_none=True)
+                if is_main and (skipped_steps <= 5 or skipped_steps % 50 == 0):
+                    base.log_message(
+                        f"Epoch {epoch+1}/{num_epochs} step {steps} - skipped optimizer step "
+                        f"(loss {loss_value:.4f}, threshold {spike_threshold:.4f}, "
+                        f"loss_ema {loss_ema:.4f})",
+                        logger,
+                        console=True,
+                        use_tqdm=True,
+                    )
+                if base.tqdm is not None and is_main and hasattr(iterator, "set_postfix_str"):
+                    iterator.set_postfix_str(f"loss={loss_value:.4f} skipped={skipped_steps}")
+                continue
+
+            if scaler is not None:
                 scaler.scale(loss).backward()
             else:
                 loss.backward()
 
-            if cfg["train"].get("grad_clip", 0.0) > 0:
-                if amp_enabled:
-                    scaler.unscale_(optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), cfg["train"]["grad_clip"])
+            grads_unscaled = False
+            if scaler is not None and sanitize_nonfinite_grads:
+                scaler.unscale_(optimizer)
+                grads_unscaled = True
 
-            if amp_enabled:
+            sanitized_this_step = False
+            if sanitize_nonfinite_grads:
+                bad_tensor_count, bad_value_count, grad_summaries = _sanitize_nonfinite_gradients(
+                    model,
+                    nonfinite_grad_log_limit,
+                )
+                if bad_value_count > 0:
+                    sanitized_this_step = True
+                    sanitized_grad_steps += 1
+                    sanitized_grad_steps_total += 1
+                    consecutive_nonfinite_grad_steps += 1
+                    should_log_sanitize = (
+                        consecutive_nonfinite_grad_steps <= 5
+                        or consecutive_nonfinite_grad_steps % 50 == 0
+                        or consecutive_nonfinite_grad_steps >= nonfinite_grad_patience
+                    )
+                    if is_main and should_log_sanitize:
+                        base.log_message(
+                            f"Epoch {epoch+1}/{num_epochs} step {steps+1} - sanitized "
+                            f"{bad_value_count} NaN/Inf gradient values in {bad_tensor_count} tensors "
+                            f"(streak {consecutive_nonfinite_grad_steps}/{nonfinite_grad_patience})",
+                            logger,
+                            console=True,
+                            use_tqdm=True,
+                        )
+                        for grad_summary in grad_summaries:
+                            base.log_message(
+                                f"  sanitized grad: {grad_summary}",
+                                logger,
+                                console=True,
+                                use_tqdm=True,
+                            )
+                    if consecutive_nonfinite_grad_steps >= nonfinite_grad_patience:
+                        if is_main:
+                            base.log_message(
+                                f"ERROR: aborting after {consecutive_nonfinite_grad_steps} consecutive "
+                                "steps with sanitized NaN/Inf gradients.",
+                                logger,
+                                console=True,
+                                use_tqdm=True,
+                            )
+                        if ddp and dist.is_available() and dist.is_initialized():
+                            dist.destroy_process_group()
+                        raise RuntimeError(
+                            "NaN/Inf gradients required sanitization for "
+                            f"{consecutive_nonfinite_grad_steps} consecutive steps"
+                        )
+
+            grad_is_finite = True
+            if cfg["train"].get("grad_clip", 0.0) > 0:
+                if scaler is not None and not grads_unscaled:
+                    scaler.unscale_(optimizer)
+                grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), cfg["train"]["grad_clip"])
+                grad_is_finite = bool(torch.isfinite(grad_norm).item())
+                if ddp:
+                    flag = torch.tensor(float(grad_is_finite), device=device)
+                    dist.all_reduce(flag, op=dist.ReduceOp.MIN)
+                    grad_is_finite = flag.item() == 1.0
+
+            if not grad_is_finite:
+                consecutive_nonfinite_grad_steps += 1
+                skipped_steps += 1
+                skipped_steps_total += 1
+                epoch_loss += loss_value
+                steps += 1
+                global_step += 1
+                should_log_nonfinite = (
+                    consecutive_nonfinite_grad_steps <= 5
+                    or consecutive_nonfinite_grad_steps % 50 == 0
+                    or consecutive_nonfinite_grad_steps >= nonfinite_grad_patience
+                )
+                if is_main and should_log_nonfinite:
+                    base.log_message(
+                        f"Epoch {epoch+1}/{num_epochs} step {steps} - skipped optimizer step "
+                        "because gradient norm was NaN/Inf "
+                        f"(streak {consecutive_nonfinite_grad_steps}/{nonfinite_grad_patience})",
+                        logger,
+                        console=True,
+                        use_tqdm=True,
+                    )
+                    for grad_summary in _format_nonfinite_gradient_summary(
+                        model,
+                        nonfinite_grad_log_limit,
+                    ):
+                        base.log_message(
+                            f"  nonfinite grad: {grad_summary}",
+                            logger,
+                            console=True,
+                            use_tqdm=True,
+                        )
+                if consecutive_nonfinite_grad_steps >= nonfinite_grad_patience:
+                    if is_main:
+                        base.log_message(
+                            f"ERROR: aborting after {consecutive_nonfinite_grad_steps} consecutive "
+                            "NaN/Inf gradient steps. Resume from the last good checkpoint with a "
+                            "more stable AMP/LR/batch-size configuration.",
+                            logger,
+                            console=True,
+                            use_tqdm=True,
+                        )
+                    if ddp and dist.is_available() and dist.is_initialized():
+                        dist.destroy_process_group()
+                    raise RuntimeError(
+                        f"NaN/Inf gradients for {consecutive_nonfinite_grad_steps} consecutive steps"
+                    )
+                optimizer.zero_grad(set_to_none=True)
+                continue
+
+            if scaler is not None:
                 scaler.step(optimizer)
                 scaler.update()
             else:
                 optimizer.step()
 
+            if not sanitized_this_step:
+                consecutive_nonfinite_grad_steps = 0
             ema.update(ema_model)
+            if loss_ema is None:
+                loss_ema = loss_value
+            else:
+                loss_ema = spike_guard_beta * loss_ema + (1.0 - spike_guard_beta) * loss_value
 
-            epoch_loss += float(loss.item())
+            epoch_loss += loss_value
             steps += 1
+            global_step += 1
             if base.tqdm is not None and is_main and hasattr(iterator, "set_postfix_str"):
-                iterator.set_postfix_str(f"loss={loss.item():.4f}")
+                iterator.set_postfix_str(f"loss={loss_value:.4f}")
 
         if use_scheduler and scheduler is not None:
             scheduler.step()
@@ -1399,6 +1869,22 @@ def main() -> None:
                 console=True,
                 use_tqdm=True,
             )
+            if skipped_steps > 0:
+                base.log_message(
+                    f"Epoch {epoch+1}/{num_epochs} - skipped_steps {skipped_steps} "
+                    f"(total {skipped_steps_total})",
+                    logger,
+                    console=True,
+                    use_tqdm=True,
+                )
+            if sanitized_grad_steps > 0:
+                base.log_message(
+                    f"Epoch {epoch+1}/{num_epochs} - sanitized_grad_steps {sanitized_grad_steps} "
+                    f"(total {sanitized_grad_steps_total})",
+                    logger,
+                    console=True,
+                    use_tqdm=True,
+                )
 
         eval_metrics = None
         eval_model = model.module if ddp else model
@@ -1410,6 +1896,7 @@ def main() -> None:
             device,
             amp_device,
             amp_enabled,
+            amp_dtype,
             desc="Eval",
             max_batches=eval_max_batches,
             use_tqdm=True,
@@ -1430,6 +1917,7 @@ def main() -> None:
                 device,
                 amp_device,
                 amp_enabled,
+                amp_dtype,
                 sampling_steps=psnr_eval_steps,
                 desc=f"Eval Sampling {'/'.join(str(s) for s in psnr_eval_steps)}",
                 max_batches=psnr_eval_max_batches,
@@ -1447,6 +1935,7 @@ def main() -> None:
                     device,
                     amp_device,
                     amp_enabled,
+                    amp_dtype,
                     sampling_steps=psnr_eval_steps,
                     desc=f"Test Sampling {'/'.join(str(s) for s in psnr_eval_steps)}",
                     max_batches=psnr_eval_max_batches,
@@ -1481,7 +1970,8 @@ def main() -> None:
                         f"PSNR {step_metrics.get('psnr', float('nan')):.2f} "
                         f"SSIM {step_metrics.get('ssim', float('nan')):.4f} "
                         f"MAE {step_metrics.get('mae', float('nan')):.4f} "
-                        f"SAM {step_metrics.get('sam', float('nan')):.2f}",
+                        f"SAM {step_metrics.get('sam', float('nan')):.2f} "
+                        f"Mean {step_metrics.get('pred_mean', float('nan')):.4f}",
                         logger,
                         console=True,
                         use_tqdm=True,
@@ -1495,7 +1985,8 @@ def main() -> None:
                         f"PSNR {step_metrics.get('psnr', float('nan')):.2f} "
                         f"SSIM {step_metrics.get('ssim', float('nan')):.4f} "
                         f"MAE {step_metrics.get('mae', float('nan')):.4f} "
-                        f"SAM {step_metrics.get('sam', float('nan')):.2f}",
+                        f"SAM {step_metrics.get('sam', float('nan')):.2f} "
+                        f"Mean {step_metrics.get('pred_mean', float('nan')):.4f}",
                         logger,
                         console=True,
                         use_tqdm=True,
@@ -1550,9 +2041,9 @@ def main() -> None:
                 best_train_loss_epoch = epoch + 1
                 checkpoint["best_train_loss"] = best_train_loss
                 checkpoint["best_train_loss_epoch"] = best_train_loss_epoch
-                torch.save(checkpoint, out_dir / "diffusion_rs_transformer_best_train_loss.pth")
+                torch.save(checkpoint, out_dir / "diffusion_rs_transformer_v3_best_train_loss.pth")
                 base.log_message(
-                    f"Epoch {epoch+1}/{num_epochs} - saved diffusion_rs_transformer_best_train_loss.pth "
+                    f"Epoch {epoch+1}/{num_epochs} - saved diffusion_rs_transformer_v3_best_train_loss.pth "
                     f"(train_loss {train_loss:.4f})",
                     logger,
                     console=True,
@@ -1567,9 +2058,9 @@ def main() -> None:
                     best_psnr_epoch = epoch + 1
                     checkpoint["best_psnr_20"] = best_psnr_20
                     checkpoint["best_psnr_epoch"] = best_psnr_epoch
-                    torch.save(checkpoint, out_dir / "diffusion_rs_transformer_best_psnr.pth")
+                    torch.save(checkpoint, out_dir / "diffusion_rs_transformer_v3_best_psnr.pth")
                     base.log_message(
-                        f"Epoch {epoch+1}/{num_epochs} - saved diffusion_rs_transformer_best_psnr.pth "
+                        f"Epoch {epoch+1}/{num_epochs} - saved diffusion_rs_transformer_v3_best_psnr.pth "
                         f"(20-step PSNR {step20_psnr:.4f})",
                         logger,
                         console=True,
@@ -1581,9 +2072,9 @@ def main() -> None:
                 checkpoint["best_psnr_epoch"] = best_psnr_epoch
                 checkpoint["best_train_loss"] = best_train_loss
                 checkpoint["best_train_loss_epoch"] = best_train_loss_epoch
-                torch.save(checkpoint, out_dir / "diffusion_rs_transformer_last.pth")
-                torch.save({"ema_state": ema.shadow}, out_dir / "diffusion_rs_transformer_ema.pth")
-                periodic_ckpt_path = out_dir / f"diffusion_rs_transformer_epoch_{epoch+1:04d}.pth"
+                torch.save(checkpoint, out_dir / "diffusion_rs_transformer_v3_last.pth")
+                torch.save({"ema_state": ema.shadow}, out_dir / "diffusion_rs_transformer_v3_ema.pth")
+                periodic_ckpt_path = out_dir / f"diffusion_rs_transformer_v3_epoch_{epoch+1:04d}.pth"
                 torch.save(checkpoint, periodic_ckpt_path)
                 base.log_message(
                     f"Epoch {epoch+1}/{num_epochs} - periodic checkpoint saved (every {save_every_epochs} epochs)",
